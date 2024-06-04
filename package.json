@@ -1,0 +1,116 @@
+{
+	"name": "fm-copilot",
+	"description": "Freshworks's Freshmarketer Copilot helps you generate code, design ideas and chat with your AI assistant.",
+	"version": "0.0.1",
+	"publisher": "freshworks.marketter",
+	"private": true,
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/Microsoft/vscode-extension-samples"
+	},
+	"extensionKind": [
+		"ui",
+		"workspace"
+	],
+	"categories": [
+		"Other"
+	],
+	"activationEvents": [],
+	"engines": {
+		"vscode": "^1.89.0"
+	},
+	"extensionDependencies": [
+		"github.copilot-chat"
+	],
+	"enabledApiProposals": [
+		"chatVariableResolver"
+	],
+	"main": "./out/extension.js",
+	"contributes": {
+		"viewsContainers": {
+			"activitybar": [
+				{
+					"id": "fm-explorer",
+					"title": "Freshmarketer Copilot for developer",
+					"icon": "icon.png"
+				}
+			]
+		},
+		"views": {
+			"fm-explorer": [
+				{
+					"type": "webview",
+					"id": "fmpilot.chat",
+					"name": "Figma Co-pilot"
+				}
+			]
+		},
+		"configuration": {
+			"type": "object",
+			"title": "FM Copilot",
+			"properties": {
+				"fmCopilot.figmaPersonalToken": {
+					"type": "string",
+					"default": "",
+					"description": "Gemini API Key for FmCopilot plugin"
+				},
+				"fmCopilot.geminiApiKey": {
+					"type": "string",
+					"default": "",
+					"description": "Gemini API Key for FmCopilot plugin"
+				},
+				"fmCopilot.chatGptApiKey": {
+					"type": "string",
+					"default": "",
+					"description": "ChatGPT API Key for FmCopilot plugin"
+				},
+				"fmCopilot.cohereaiApiKey": {
+					"type": "string",
+					"default": "",
+					"description": "Coherai API Key for FmCopilot plugin"
+				},
+				"fmCopilot.deepaiApiKey": {
+					"type": "string",
+					"default": "",
+					"description": "DeepAI API Key for FmCopilot plugin"
+				}
+			}
+		}
+	},
+	"scripts": {
+		"vscode:prepublish": "npm run compile",
+		"compile": "tsc -p ./",
+		"lint": "eslint \"src/**/*.ts\"",
+		"watch": "tsc -w -p ./",
+		"package": "vsce package"
+	},
+	"devDependencies": {
+		"@babel/plugin-syntax-jsx": "^7.24.6",
+		"@types/react": "^18.3.3",
+		"@types/react-dom": "^18.3.0",
+		"@typescript-eslint/eslint-plugin": "^6.7.0",
+		"@typescript-eslint/parser": "^6.7.0",
+		"css-loader": "^7.1.2",
+		"eslint": "^8.32.0",
+		"mini-css-extract-plugin": "^2.9.0",
+		"postcss": "^8.4.38",
+		"postcss-loader": "^8.1.1",
+		"postcss-preset-env": "^9.5.14",
+		"react": "^18.3.1",
+		"react-dom": "^18.3.1",
+		"style-loader": "^4.0.0",
+		"ts-loader": "^9.5.1",
+		"typescript": "^5.4.2",
+		"webpack": "^5.91.0",
+		"webpack-cli": "^5.1.4",
+		"webpack-dev-server": "^5.0.4"
+	},
+	"dependencies": {
+		"@google/generative-ai": "^0.12.0",
+		"axios": "^1.7.2",
+		"babel-loader": "^9.1.3",
+		"deepai": "^1.0.23",
+		"tailwindcss": "^3.4.3"
+	}
+}
