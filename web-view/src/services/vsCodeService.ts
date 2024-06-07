@@ -1,3 +1,4 @@
+import exp from "constants";
 import { VsCommands } from "../constants";
 import useVsCodeMessageStore from "../store/vsCodeMessageStore";
 type VsCodeMessageCommand = 'copilotResponse';
@@ -20,6 +21,15 @@ export function sendCopilotPromptRequest(prompt: string, history) {
 	vsCode.postMessage({ command: 'copilotRequest', prompt: prompt, history })
 }
 
+export function sendFigmaDataRequest(id) {
+	vsCode.postMessage({ command: 'figmaDataRequest', id });
+}
+
+export function sendNodeSelectedEvent(selectedNode) {
+	vsCode.postMessage({ command: 'figmaNodeSelected', selectedNode });
+}
+
+
 export function sendCopyCliboardRequest(text) {
 	vsCode.postMessage({ command: 'copyClipboard', text: text })
 }
@@ -29,7 +39,7 @@ export function sendCreateFileRequest(fileName, text) {
 }
 
 export function openConfiguration(key) {
-	vsCode.postMessage({ command: 'openConfiguration', key: key })
+	vsCode?.postMessage({ command: 'openConfiguration', key: key })
 }
 
 export function getState(key) {

@@ -21,7 +21,7 @@ export const initSChat = async () => {
     systemInstruction: LlmPrompt
   });
   chatSession = model.startChat({
-    history: getHistory().map(c => ({ role: roleMap[c.sender], parts: [{ text: c.text }] })).reverse(),
+    history: getHistory().map(c => ({ role: roleMap[c.sender], parts: [{ text: c.text }] })),
     generationConfig: {
       candidateCount: 1
     },

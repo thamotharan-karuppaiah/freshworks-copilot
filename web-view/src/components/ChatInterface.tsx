@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import 'tailwindcss/tailwind.css';
 import useChatStore, { ChatStore } from '../store/chat-message-store';
 import { getChatGptResponse } from '../services/chatgptService';
@@ -12,66 +12,83 @@ import FigmaNodeViewer from './FigmaNode';
 import LlmResponse from './LlmResponse';
 import { Sender } from '../constants';
 import { getDeepAiResponse } from '../services/deepAiService';
+import EmptyState from './EmptyState';
+import useVsCodeMessageStore from '../store/vsCodeMessageStore';
+import LoadingText from './LoadingText';
+import { createComponent } from '../util/figma-html';
 
 const ChatInterface: React.FC = () => {
-  const { messages, addMessage, clearMessages, deleteMessage, lastKnownFigmaNode, setLastKnownFigmaNode }: ChatStore = useChatStore();
+  const { messages, addMessage, clearMessages, lastKnownFigmaNode, setLastKnownFigmaNode }: ChatStore = useChatStore();
+  const vsCodeMessage = useVsCodeMessageStore((state) => state.message);
   const [inputText, setInputText] = useState('');
-  const [figmaUrl, setFigmaUrl] = useState('');
   const [loading, setLoading] = useState(false);
   const [model, setModel] = useState('gemini');
+  const [followupSuggestions, setfollowupSuggestions] = useState<string[]>([]);
 
+  useEffect(() => {
+    if (!vsCodeMessage) return;
+    vsCodeMessage.command === 'figmaNodeSelected' && setLastKnownFigmaNode(vsCodeMessage.selectedNode);
+  }, [vsCodeMessage]);
 
   const processIfPromptIsFigmaURL = async (inputText: string) => {
     let response = await getFigmaResponse(inputText, (message) => addMessage({ sender: Sender.Bot, text: message, presentationonly: true }));
     let { fileInfo, nodeResponse, nodeImages } = response;
-    setLastKnownFigmaNode(nodeResponse);
-    let hiddenPrompt;
+    // let hiddenPrompt;
     if (nodeResponse) {
       addMessage({
-        sender: Sender.Bot, text: '', figmaResponse: response, imgPath: nodeImages.images[fileInfo.nodeID.replace('-', ':')], presentationonly: true, isImage: true
+        sender: Sender.Bot, text: '', figmaResponse: response, imgPath: nodeImages.images[fileInfo.nodeID.replace('-', ':')], presentationonly: true, isImage: true, hidden: true
       });
-      hiddenPrompt = `HIDDEN:<${JSON.stringify(nodeResponse)}>`;
-      addMessage({ sender: Sender.User, text: hiddenPrompt, hidden: true });
     }
-    return hiddenPrompt;
   }
 
-  const sendMessage = async () => {
-    if (inputText.trim() === '') return;
+  const sendMessage = async (messageText?: string) => {
+    setfollowupSuggestions([]);
+    const message = messageText || inputText;
+    if (message.trim() === '') return;
 
     setInputText('');
     setLoading(true);
 
     try {
       let hiddenPrompt;
-      if (checktextHasFigmaUrl(inputText)) {
-        addMessage({ sender: Sender.User, text: inputText, presentationonly: true });
-        hiddenPrompt = await processIfPromptIsFigmaURL(inputText);
-        addMessage({ sender: Sender.User, text: hiddenPrompt, hidden: true });
+      if (checktextHasFigmaUrl(message)) {
+        addMessage({ sender: Sender.User, text: message });
+        await processIfPromptIsFigmaURL(message);
       }
       else {
-        addMessage({ sender: Sender.User, text: inputText });
+        addMessage({ sender: Sender.User, text: message });
+        if (lastKnownFigmaNode) {
+          hiddenPrompt = `HIDDEN:FIGMA HTML : ${createComponent(lastKnownFigmaNode as any, {}, {}, {})}`;
+        }
       }
 
       let botResponse = '';
       switch (model) {
         case 'chatgpt':
-          botResponse = await getChatGptResponse(inputText);
+          botResponse = await getChatGptResponse(message);
           break;
         case 'gemini':
-          botResponse = await getGeminiResponse(inputText, hiddenPrompt);
+          botResponse = await getGeminiResponse(message, hiddenPrompt);
           break;
         case 'copilot':
-          botResponse = await getCopilotResponse(inputText, hiddenPrompt);
+          botResponse = await getCopilotResponse(message, hiddenPrompt);
           break;
         case 'cohereai':
-          botResponse = await getCohereAiResponse(inputText, hiddenPrompt);
+          botResponse = await getCohereAiResponse(message, hiddenPrompt);
           break;
-          case 'deepai':
-            botResponse = await getDeepAiResponse(inputText, hiddenPrompt);
-            break;
+        case 'deepai':
+          botResponse = await getDeepAiResponse(message, hiddenPrompt);
+          break;
         default:
           botResponse = 'Invalid model selected';
+      }
+
+      try {
+        let followUpResponse = JSON.parse(botResponse).followups || [];
+        setfollowupSuggestions(followUpResponse)
+      }
+      catch {
+        setfollowupSuggestions([]) // do nothing
       }
 
       const botMessage = { sender: Sender.Bot, text: botResponse };
@@ -84,36 +101,11 @@ const ChatInterface: React.FC = () => {
     }
   };
 
-  const handleFigmaUrlSubmit = async () => {
-    setLoading(true);
-    let response = await getFigmaResponse(figmaUrl, (message) => addMessage({ sender: Sender.Bot, text: message, presentationonly: true }));
-
-    let { fileInfo, nodeResponse, nodeImages } = response;
-    setLastKnownFigmaNode(nodeResponse);
-    if (nodeResponse) {
-      const botMessage = { sender: Sender.Bot, text: '', nodeResponse, fileInfo, nodeImages, imgPath: nodeImages.images[fileInfo.nodeID.replace('-', ':')], presentationonly: true, isImage: true };
-      addMessage(botMessage);
-    }
-    setLoading(false);
-  }
-
   return (
     <div className="flex flex-col h-screen">
       <div className="flex justify-between p-4 bg-gray-800 text-white items-center">
         <div className="flex items-center space-x-2">
-          <input
-            type="text"
-            className="p-2 rounded-lg bg-gray-700 text-white"
-            placeholder="Enter Figma URL"
-            value={figmaUrl}
-            onChange={(e) => setFigmaUrl(e.target.value)}
-          />
-          <button
-            className="bg-blue-500 p-2 rounded"
-            onClick={handleFigmaUrlSubmit}
-          >
-            Submit
-          </button>
+          <span>Freshworks Copilot  {lastKnownFigmaNode && `: FIGMA MODE`}</span>
         </div>
         <div className="flex items-center space-x-2">
           <select
@@ -129,7 +121,7 @@ const ChatInterface: React.FC = () => {
           </select>
           <button
             className="bg-red-500 p-2 rounded"
-            onClick={clearMessages}
+            onClick={() => { clearMessages(); setLastKnownFigmaNode(null); setfollowupSuggestions([]); }}
           >
             Clear Chat
           </button>
@@ -139,35 +131,55 @@ const ChatInterface: React.FC = () => {
       <div className="flex flex-col-reverse overflow-auto flex-1 p-4">
         {loading && (
           <div className="self-start bg-gray-300 text-gray-800 p-2 rounded-lg m-2 animate-pulse">
-            Loading...
+            <LoadingText startTime={1}></LoadingText>
           </div>
         )}
         <div className="flex flex-col">
-          {messages.filter(c => !c.hidden).map((message, index) => (
-            <div
-              key={message.key}
-              className={`p-2 rounded-lg m-2 flex flex-col justify-between transform transition-all duration-500 ${message.sender === 'user'
-                ? 'bg-blue-500 text-white self-end fadeIn'
-                : 'bg-gray-300 text-gray-800 self-start fadeIn'
-                }`}
-            >
-
-              {message.isImage ?
-                // <img className="max-w-[80%] max-h-[350px]" src={message.imgPath} alt='image' /> 
-                <FigmaNodeViewer fileResponse={message.figmaResponse.nodeResponse} image={message.imgPath}></FigmaNodeViewer>
-                :
-
-                <LlmResponse data={message.text}></LlmResponse>}
-              {/* <button
-                className="ml-2 bg-red-500 p-1 rounded text-white"
-                onClick={() => deleteMessage(index)}
+          {messages.filter(c => !c.hidden).length === 0 ? (
+            <EmptyState />
+          ) : (
+            messages.filter(c => !c.hidden || c.presentationonly).map((message, index) => (
+              <div
+                key={message.key}
+                className={`max-w-full p-2 rounded-lg m-2 flex flex-col justify-between transform transition-all duration-500 ${message.sender === 'user'
+                  ? 'bg-blue-500 text-white self-end fadeIn'
+                  : 'bg-gray-300 text-gray-800 self-start fadeIn'
+                  }`}
               >
-                Delete
-              </button> */}
-            </div>
-          ))}
+                {message.isImage ?
+                  <FigmaNodeViewer fileResponse={message.figmaResponse.nodeResponse} image={message.imgPath}></FigmaNodeViewer>
+                  :
+                  <LlmResponse data={message.text}></LlmResponse>}
+              </div>
+            ))
+          )}
         </div>
       </div>
+
+      {/* Follow-up suggestions section */}
+      {followupSuggestions.length > 0 && (
+        <div className="p-4 bg-gray-800 flex flex-wrap">
+          {followupSuggestions.map((suggestion, index) => (
+            <button
+              key={index}
+              className="m-1 p-2 bg-blue-500 text-white rounded-lg"
+              onClick={() => sendMessage(suggestion)}
+            >
+              {suggestion}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {lastKnownFigmaNode && (
+        <div className="flex items-center p-4 bg-gray-200 justify-between">
+          <span>Selected Node: <b>{lastKnownFigmaNode.name}</b></span>
+          <div className="flex space-x-2">
+            <button onClick={() => sendMessage(`Submitted the node: ${lastKnownFigmaNode.name}`)} className="px-2 py-1 bg-blue-500 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">Submit</button>
+            <button onClick={() => setLastKnownFigmaNode(null)} className="px-2 py-1 bg-gray-400 text-white rounded-md hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">Close</button>
+          </div>
+        </div>
+      )}
 
       <div className="p-4 bg-gray-800 flex items-center">
         <input
@@ -182,7 +194,7 @@ const ChatInterface: React.FC = () => {
         />
         <button
           className="ml-2 p-2 bg-blue-500 text-white rounded-lg flex items-center justify-center"
-          onClick={sendMessage}
+          onClick={() => sendMessage}
         >
           Send
         </button>

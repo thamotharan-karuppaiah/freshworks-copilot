@@ -2,11 +2,12 @@ import React from 'react';
 import logo from './logo.svg';
 import './App.css';
 import ChatInterface from './components/ChatInterface';
+import FigmaInspector from './components/FigmaInspector';
 
 function App() {
   return (
     <>
-      <ChatInterface></ChatInterface>
+      {!(window as any).showFigmaInspector ? <ChatInterface></ChatInterface> : <FigmaInspector></FigmaInspector>}
     </>
   );
 }

@@ -1,5 +1,7 @@
 import * as vscode from 'vscode';
 import { sendRequest, sendCopyCliboardRequest, sendCreateFileRequest, openConfiguration } from './copilot';
+import { loadChatView, openFigmaInspectorView } from './web-view';
+import { registerFigmaWebViewEvents, registerWebViewEvents } from './web-view-events';
 
 export function activate(context: vscode.ExtensionContext) {
 
@@ -22,6 +24,20 @@ export function activate(context: vscode.ExtensionContext) {
 		}
 		return meesage;
 	}));
+
+	context.subscriptions.push(vscode.commands.registerCommand('figma.inspect', async (data: { fileResponse: any, image: any }) => {
+		const panel = vscode.window.createWebviewPanel(
+			'figmaInspector',
+			'Figma Inspector: ' + data.fileResponse.name,
+			vscode.ViewColumn.One,
+			{
+				enableScripts: true
+			}
+		);
+		openFigmaInspectorView(panel.webview, context.extensionUri);
+		panel.reveal(vscode.ViewColumn.Active);
+		registerFigmaWebViewEvents(panel.webview, data.fileResponse, data.image);
+	}))
 }
 
 class FigmaChatViewProvider implements vscode.WebviewViewProvider {
@@ -49,135 +65,18 @@ class FigmaChatViewProvider implements vscode.WebviewViewProvider {
 				vscode.Uri.joinPath(this._extensionUri, 'web-view', 'build')
 			]
 		};
-		let indexPath = vscode.Uri.joinPath(this._extensionUri, 'web-view', 'build', 'index.html');
-		let html = (await vscode.workspace.fs.readFile(indexPath)).toString();;
-		let path = webviewView.webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'web-view', 'build', 'static'));
-		html = html.replace(/\/static\//g, path + '/');
-		webviewView.webview.html = html;
-		webviewView.webview.options.enableCommandUris
+		loadChatView(webviewView.webview, this._extensionUri);
+		// let indexPath = vscode.Uri.joinPath(this._extensionUri, 'web-view', 'build', 'index.html');
+		// let html = (await vscode.workspace.fs.readFile(indexPath)).toString();;
+		// let path = webviewView.webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'web-view', 'build', 'static'));
+		// html = html.replace(/\/static\//g, path + '/');
+		// webviewView.webview.html = html;
 
 		// webviewView.webview.html =  this.getWebviewContent(webviewView.webview);//  //  this._getHtmlForWebview(webviewView.webview);// 
 
-		webviewView.webview.onDidReceiveMessage(async data => {
-			switch (data.command) {
-				// case 'copilotRequest':
-				// 	{
-				// 		let meesage = '';
-				// 		try {
-				// 			meesage = await sendRequest(data.prompt, data.history);
-				// 		} catch {
-				// 			meesage = 'Unable to process';
-				// 		}
-				// 		webviewView.webview.postMessage({ command: 'copilotResponse', response: meesage });
-				// 		break;
-				// 	}
-				case 'copyClipboard':
-					{
-						sendCopyCliboardRequest(data.text);
-						break;
-					}
-				case 'createFile':
-					{
-						sendCreateFileRequest(data.fileName, data.text);
-						break;
-					}
-				case 'openConfiguration':
-					{
-						openConfiguration(data.key);
-						break;
-					}
-				case "executeAnyCommand":
-					{
-						let result = await vscode.commands.executeCommand(data.vsCommand, ...(data.args || []));
-						webviewView.webview.postMessage({ ...data, result });
-						break;
-					}
-			}
-		});
+		registerWebViewEvents(webviewView.webview);
 	}
 
-	// public addColor() {
-	// 	if (this._view) {
-	// 		this._view.show?.(true); // `show` is not implemented in 1.49 but is for 1.50 insiders
-	// 		this._view.webview.postMessage({ type: 'addColor' });
-	// 	}
-	// }
-
-	// public clearColors() {
-	// 	if (this._view) {
-	// 		this._view.webview.postMessage({ type: 'clearColors' });
-	// 	}
-	// }
-
-	private _getHtmlForWebview(webview: vscode.Webview) {
-		// Get the local path to main script run in the webview, then convert it to a uri we can use in the webview.
-		let actualURI = vscode.Uri.joinPath(this._extensionUri, 'media', 'main.js');
-		const scriptUri = webview.asWebviewUri(actualURI);
-
-		// Do the same for the stylesheet.
-		const styleResetUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'media', 'reset.css'));
-		const styleVSCodeUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'media', 'vscode.css'));
-		const styleMainUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'media', 'main.css'));
-
-		// Use a nonce to only allow a specific script to be run.
-		const nonce = getNonce();
-		// <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource}; script-src 'nonce-${nonce}';">
-		// nonce="${nonce}"
-		let a = `<!DOCTYPE html>
-			<html lang="en">
-			<head>
-				<meta charset="UTF-8">
-
-				<!--
-					Use a content security policy to only allow loading styles from our extension directory,
-					and only allow scripts that have a specific nonce.
-					(See the 'webview-sample' extension sample for img-src content security policy examples)
-				-->
-			
-
-				<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-				<link href="${styleResetUri}" rel="stylesheet">
-				<link href="${styleVSCodeUri}" rel="stylesheet">
-				<link href="${styleMainUri}" rel="stylesheet">
-
-				<title>Cat Colors</title>
-			</head>
-			<body>
-				<ul class="color-list">
-				</ul>
-
-				<button class="add-color-button">Add Color</button>
-
-				<script  src="${scriptUri}"></script>
-			</body>
-			</html>`;
-		return a;
-	}
-
-	private getWebviewContent(webview: vscode.Webview) {
-		let path = vscode.Uri.joinPath(this._extensionUri, 'out', 'web-view', 'sidebar-view.js');
-		let scriptUri = webview.asWebviewUri(path);
-		const styleMainUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'out', 'web-view', 'main.css'));
-		// const scriptUri = vscode.Uri.file(path);
-		// Use a nonce to only allow a specific script to be run.
-		// const nonce = getNonce();
-		let a = `<!DOCTYPE html>
-        <html lang="en">
-        <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>React Panel</title>
-			<link href="${styleMainUri}" rel="stylesheet">
-        </head>
-        <body>
-			HelloWorld
-            <div id="root"></div>
-            <script src="${scriptUri}"></script>
-        </body>
-        </html>`;
-		return a;
-	}
 }
 
 function getNonce() {

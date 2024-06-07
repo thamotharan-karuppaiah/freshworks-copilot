@@ -6,7 +6,7 @@ import { FigmaFileInfo } from '../util/figma';
 import { Sender } from "../constants"
 import { resetChat } from '../services/geminiService';
 
-interface Message {
+export interface Message {
 	key?: number;
 	sender: Sender;
 	text: string;
@@ -24,6 +24,8 @@ interface Message {
 
 export interface ChatStore {
 	messages: Message[];
+	// hiddenMessages: Message[];
+	// addHiddenMessage: (message: Message) => void;
 	addMessage: (message: Message) => void;
 	clearMessages: () => void;
 	deleteMessage: (index: number) => void;
@@ -31,15 +33,17 @@ export interface ChatStore {
 	setLastKnownFigmaNode: (node: any) => void;
 }
 
-const useChatStore = create<ChatStore | any>(
+const useChatStore = create<ChatStore>(
 	persist(
 		(set) => ({
 			messages: [],
+			hiddenMessages: [],
 			addMessage: (message) =>
 				set((state) => ({ messages: [...state.messages, { ...message, key: Math.random() }] })),
+			// addHiddenMessage: (message) => set((state) => ({ hiddenMessages: message ? [message] : [] })),
 			clearMessages: () => {
 				resetChat(); // reset gemini chat
-				return set({ messages: [] })
+				return set({ messages: [], hiddenMessages: [], lastKnownFigmaNode: null})
 			},
 			deleteMessage: (index) =>
 				set((state) => ({
@@ -51,7 +55,7 @@ const useChatStore = create<ChatStore | any>(
 		{
 			name: 'chat-storage', // unique name
 		}
-	)
+	) as any
 );
 
 export const getHistory = (excludePresenation = true): Message[] => {
