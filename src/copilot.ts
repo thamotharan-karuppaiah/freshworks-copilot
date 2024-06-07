@@ -65,5 +65,5 @@ export const sendCreateFileRequest = async (fileName: string, text: string) => {
 
 
 export const openConfiguration = async (key: string) => {
-	await vscode.commands.executeCommand('workbench.action.openSettings', `fmCopilot.${key}`);
+	await vscode.commands.executeCommand('workbench.action.openSettings', `fwCopilot.${key}`);
 }

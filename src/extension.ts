@@ -11,7 +11,7 @@ export function activate(context: vscode.ExtensionContext) {
 		vscode.window.registerWebviewViewProvider(FigmaChatViewProvider.viewType, provider));
 
 	context.subscriptions.push(vscode.commands.registerCommand('fmpilot.getConfiguration', () => {
-		const config = vscode.workspace.getConfiguration('fmCopilot');
+		const config = vscode.workspace.getConfiguration('fwCopilot');
 		return config;
 	}));
 

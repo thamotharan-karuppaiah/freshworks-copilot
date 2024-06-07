@@ -66,7 +66,7 @@ const LlmResponse: React.FC<Props> = ({ data }) => {
 	};
 
 	return (
-		<div className="p-4">
+		<>
 			<div>{responseMessage}</div>
 			{inspectRequested && <button className="bg-blue-500 text-white py-2 px-4 rounded mt-2 hover:bg-blue-600" onClick={onInspectFigma}>Inspect</button>}
 			{availableFigmaDesigns.length > 0 && (
@@ -75,8 +75,8 @@ const LlmResponse: React.FC<Props> = ({ data }) => {
 						<span>Available Figma Designs - Click to Inspect:</span>
 						<button className="text-gray-500 hover:text-gray-700" onClick={closeAvailableFigmaDesigns}>x</button>
 					</div>
-					{availableFigmaDesigns.map((msg) => (
-						<div key={msg.key} className="p-2 border-b last:border-b-0 hover:bg-gray-100 cursor-pointer" onClick={() => openIspector(msg)}>{msg.text}</div>
+					{availableFigmaDesigns.map((msg, i) => (
+						<div key={i} className="p-2 border-b last:border-b-0 hover:bg-gray-100 cursor-pointer" onClick={() => openIspector(msg)}>{msg.figmaResponse.nodeResponse.name}</div>
 					))}
 				</div>
 			)}
@@ -103,7 +103,7 @@ const LlmResponse: React.FC<Props> = ({ data }) => {
 					))}
 				</div>
 			)}
-		</div>
+		</>
 	);
 };
 

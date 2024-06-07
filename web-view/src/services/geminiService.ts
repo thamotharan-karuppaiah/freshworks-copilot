@@ -18,7 +18,7 @@ export const initSChat = async () => {
   const genAI = new GoogleGenerativeAI(API_KEY);
   model = genAI.getGenerativeModel({
     model: "gemini-1.5-flash",
-    systemInstruction: LlmPrompt
+    systemInstruction: LlmPrompt,
   });
   chatSession = model.startChat({
     history: getHistory().map(c => ({ role: roleMap[c.sender], parts: [{ text: c.text }] })),

@@ -105,7 +105,7 @@ const ChatInterface: React.FC = () => {
     <div className="flex flex-col h-screen">
       <div className="flex justify-between p-4 bg-gray-800 text-white items-center">
         <div className="flex items-center space-x-2">
-          <span>Freshworks Copilot  {lastKnownFigmaNode && `: FIGMA MODE`}</span>
+          <span>Freshworks Copilot</span>
         </div>
         <div className="flex items-center space-x-2">
           <select
@@ -157,48 +157,52 @@ const ChatInterface: React.FC = () => {
       </div>
 
       {/* Follow-up suggestions section */}
-      {followupSuggestions.length > 0 && (
-        <div className="p-4 bg-gray-800 flex flex-wrap">
-          {followupSuggestions.map((suggestion, index) => (
-            <button
-              key={index}
-              className="m-1 p-2 bg-blue-500 text-white rounded-lg"
-              onClick={() => sendMessage(suggestion)}
-            >
-              {suggestion}
-            </button>
-          ))}
-        </div>
-      )}
-
-      {lastKnownFigmaNode && (
-        <div className="flex items-center p-4 bg-gray-200 justify-between">
-          <span>Selected Node: <b>{lastKnownFigmaNode.name}</b></span>
-          <div className="flex space-x-2">
-            <button onClick={() => sendMessage(`Submitted the node: ${lastKnownFigmaNode.name}`)} className="px-2 py-1 bg-blue-500 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">Submit</button>
-            <button onClick={() => setLastKnownFigmaNode(null)} className="px-2 py-1 bg-gray-400 text-white rounded-md hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">Close</button>
-          </div>
-        </div>
-      )}
-
-      <div className="p-4 bg-gray-800 flex items-center">
-        <input
-          type="text"
-          className="flex-1 p-2 rounded-lg"
-          placeholder="Type a message..."
-          value={inputText}
-          onChange={(e) => setInputText(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') sendMessage();
-          }}
-        />
-        <button
-          className="ml-2 p-2 bg-blue-500 text-white rounded-lg flex items-center justify-center"
-          onClick={() => sendMessage}
-        >
-          Send
-        </button>
+      <div className={`max-h-[82px] p-4 text-xs bg-gray-800 flex flex-nowrap slide-up overflow-x-auto ${followupSuggestions.length > 0 ? '' : `hidden`}`}>
+        {followupSuggestions.map((suggestion, index) => (
+          <button
+            key={index}
+            className="m-1 p-2 bg-blue-500 text-white rounded-lg whitespace-nowrap"
+            onClick={() => sendMessage(suggestion)}
+          >
+            {suggestion}
+          </button>
+        ))}
       </div>
+      {lastKnownFigmaNode
+        ? (
+          <div className="p-4 bg-gray-800 flex items-center">
+            <input
+              disabled={true}
+              type="text"
+              className="flex-1 p-2 rounded-lg bg-[#f5deb3]"
+              value={'You selected the node : ' + lastKnownFigmaNode.name}
+            />
+            <button onClick={() => { sendMessage(`Submitted the node: ${lastKnownFigmaNode.name}`); setLastKnownFigmaNode(null) }} className="ml-2 p-2 bg-blue-500 text-white rounded-lg flex items-center justify-center">Submit</button>
+            <button onClick={() => setLastKnownFigmaNode(null)} className="ml-2 p-2 bg-gray-500 text-white rounded-lg flex items-center justify-center">Close</button>
+          </div>
+        ) : (
+          <div className="p-4 bg-gray-800 flex items-center">
+            <input
+              type="text"
+              className="flex-1 p-2 rounded-lg "
+              placeholder="Type a message..."
+              value={inputText}
+              onChange={(e) => setInputText(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') sendMessage();
+              }}
+            />
+            <button
+              className="ml-2 p-2 bg-blue-500 text-white rounded-lg flex items-center justify-center"
+              onClick={() => sendMessage()}
+            >
+              Send
+            </button>
+          </div>
+        )
+      }
+
+
     </div>
   );
 };

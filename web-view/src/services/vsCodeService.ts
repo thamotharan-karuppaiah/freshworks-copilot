@@ -43,7 +43,7 @@ export function openConfiguration(key) {
 }
 
 export function getState(key) {
-	return (vsCode?.getState() as any)?.fmCopilot?.[key];
+	return (vsCode?.getState() as any)?.fwCopilot?.[key];
 }
 
 export async function executeAnyCommand(vsCommand: VsCommands, ...args: any[]) {

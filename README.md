@@ -1,6 +1,6 @@
 # Freshmarketer Copilot for Developers
 
-Freshmarketer Copilot (FM Copilot) is a powerful Visual Studio Code extension designed to assist developers with code generation and Figma to code conversion. It leverages advanced AI capabilities to help you efficiently create code and seamlessly convert Figma designs into code.
+Freshworks Copilot is a powerful Visual Studio Code extension designed to assist developers with code generation and Figma to code conversion. It leverages advanced AI capabilities to help you efficiently create code and seamlessly convert Figma designs into code.
 
 ## Features
 
@@ -15,7 +15,7 @@ Freshmarketer Copilot (FM Copilot) is a powerful Visual Studio Code extension de
 
 ## Getting Started
 
-To start using FM Copilot:
+To start using Freshworks Copilot:
 
 1. Open the command palette in VS Code (`Ctrl+Shift+P` or `Cmd+Shift+P` on macOS).
 2. Search for `Freshmarketer Copilot: Start` and select it.
@@ -36,13 +36,13 @@ Simply start typing your code, and the AI assistant will provide suggestions and
 
 ## Configuration
 
-To configure FM Copilot, open the settings in VS Code and search for `FM Copilot`. You can set the following API keys:
+To configure Freshworks Copilot, open the settings in VS Code and search for `Freshworks Copilot`. You can set the following API keys:
 
-- `fmCopilot.figmaPersonalToken`: Figma Personal Token
-- `fmCopilot.geminiApiKey`: Gemini API Key
-- `fmCopilot.chatGptApiKey`: ChatGPT API Key
-- `fmCopilot.cohereaiApiKey`: CohereAI API Key
-- `fmCopilot.deepaiApiKey`: DeepAI API Key
+- `fwCopilot.figmaPersonalToken`: Figma Personal Token
+- `fwCopilot.geminiApiKey`: Gemini API Key
+- `fwCopilot.chatGptApiKey`: ChatGPT API Key
+- `fwCopilot.cohereaiApiKey`: CohereAI API Key
+- `fwCopilot.deepaiApiKey`: DeepAI API Key
 
 ## Development
 
