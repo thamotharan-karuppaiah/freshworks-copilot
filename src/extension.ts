@@ -62,7 +62,7 @@ class FigmaChatViewProvider implements vscode.WebviewViewProvider {
 			enableScripts: true,
 
 			localResourceRoots: [
-				vscode.Uri.joinPath(this._extensionUri, 'web-view', 'build')
+				vscode.Uri.joinPath(this._extensionUri, 'out', 'web-view')
 			]
 		};
 		loadChatView(webviewView.webview, this._extensionUri);
