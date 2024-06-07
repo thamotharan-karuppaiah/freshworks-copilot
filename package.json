@@ -81,7 +81,7 @@
 	"scripts": {
 		"vscode:prepublish": "npm run compile",
 		"compile": "npm run compile-web-view && tsc -p ./",
-		"compile-web-view": "cd web-view && npm run build && mkdir -p ../out/web-view  && cp -r build ../out/web-view",
+		"compile-web-view": "cd web-view && npm run build",
 		"lint": "eslint \"src/**/*.ts\"",
 		"watch": "tsc -w -p ./",
 		"package": "vsce package"
