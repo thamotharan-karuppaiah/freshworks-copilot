@@ -1,53 +1,40 @@
-// services/chatgptService.ts
-import axios from 'axios';
+import OpenAI from "openai";
+import { Message, getHistory } from '../store/chat-message-store';
+import { LlmPrompt, VsCommands } from '../constants';
+import { executeAnyCommand, getConfiguration, getState, openConfiguration } from './vsCodeService';
+import { ChatCompletionCreateParamsNonStreaming } from "openai/resources";
 
-export const getChatGptResponse = async (prompt: string) => {
-  const response = await axios.post('/api/chatgpt', { prompt });
-  return response.data.response;
+const roleMap = {
+  user: 'user',
+  bot: 'assistant',
+  system: 'system'
+}
+
+// Access your API key (make sure to set it up in your environment or configuration)
+let openai: OpenAI;
+let model;
+
+export const initChatGPT = async () => {
+  let API_KEY = await getConfiguration('chatGptApiKey');
+  let endpoint = await getConfiguration('chatGptEndpoint');
+  model = await getConfiguration('chatGptModel');
+  openai = new OpenAI({ apiKey: API_KEY, baseURL: endpoint, dangerouslyAllowBrowser: true });
+}
+
+export const getChatGptResponse = async (history: Message[], prompt) => {
+  await initChatGPT();
+  const messageHistory = history.map(c => ({ role: roleMap[c.sender], content: c.text })) as any;
+  let messages = [{ role: roleMap.system, content: LlmPrompt }, ...messageHistory, { role: roleMap.user, content: prompt }];
+  let chatCompletionParams: ChatCompletionCreateParamsNonStreaming = { messages: messages, model: model };
+
+  let result = await openai.chat.completions.create(chatCompletionParams);;
+  let text = result.choices[0].message.content;
+
+  // Extract JSON text from the text like ```json { "type": "text", "message": "Why don't scientists trust atoms? Because they make up everything! 😂" } ```
+  const jsonText = text.match(/```json(.*)```/s);
+  if (jsonText && jsonText[1]) {
+    return jsonText[1];
+  } else {
+    return text;
+  }
 };
-
-// import OpenAI from "openai";
-// import { getHistory } from '../store/chat-message-store';
-// import { LlmPrompt, VsCommands } from '../constants';
-// import { executeAnyCommand, getConfiguration, getState, openConfiguration } from './vsCodeService';
-
-// const roleMap = {
-//   user: 'user',
-//   bot: 'assistant',
-//   system: 'system'
-// }
-
-// // Access your API key (make sure to set it up in your environment or configuration)
-// let openai: OpenAI;
-
-// export const initChatGPT = async () => {
-//   let API_KEY = await getConfiguration('chatGptApiKey');
-//   openai = new OpenAI({ apiKey: API_KEY });
-// }
-
-// export const getChatGPTResponse = async (prompt: string, hiddenContext?: string) => {
-//   await initChatGPT();
-//   const history = getHistory().map(c => ({ role: roleMap[c.sender], content: c.text })).reverse();
-
-//   let messages = [{ role: roleMap.system, content: LlmPrompt }, ...history, { role: roleMap.user, content: prompt }];
-//   if (hiddenContext) {
-//     messages.push({ role: roleMap.user, content: hiddenContext });
-//   }
-
-//   // openai.chat.completions.create({ messages: [] })
-
-//   // const response = await openai.createChatCompletion({
-//   //   model: "gpt-4",
-//   //   messages: messages
-//   // });
-
-//   // const text = response.data.choices[0].message.content;
-
-//   // Extract JSON text from the text like ```json { "type": "text", "message": "Why don't scientists trust atoms? Because they make up everything! 😂" } ```
-//   // const jsonText = text.match(/```json(.*)```/s);
-//   // if (jsonText && jsonText[1]) {
-//   //   return jsonText[1];
-//   // } else {
-//   //   return text;
-//   // }
-// };

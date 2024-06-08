@@ -25,12 +25,17 @@ code {
   from {
     height: 0;
   }
+
   to {
-    height: 100%;
+    height: max-content;
   }
 }
 
+.chat-message:has(.has-files) {
+  min-width: 100%;
+}
+
 /* Apply the animation to the chat interface */
-.slide-up{
+.slide-up {
   animation: slideUp 0.5s ease-out;
 }

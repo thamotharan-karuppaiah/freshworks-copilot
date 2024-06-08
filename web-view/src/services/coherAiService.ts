@@ -1,5 +1,5 @@
 // services/geminiService.ts
-import { getHistory } from '../store/chat-message-store';
+import { getHistory, Message } from '../store/chat-message-store';
 import { LlmPrompt, VsCommands } from '../constants';
 import { executeAnyCommand, getConfiguration, getState, openConfiguration } from './vsCodeService';
 import { CohereClient } from "cohere-ai"
@@ -19,11 +19,11 @@ export const initClient = async () => {
 	return client;
 }
 
-export const getCohereAiResponse = async (prompt: string, hiddenContext?: string) => {
+export const getCohereAiResponse = async (history: Message[], prompt) => {
 	client = client ? client : await initClient();
 	let response = await client.chat({
 		message: prompt,
-		chatHistory: [{ role: roleMap.system as any, message: LlmPrompt }, ...getHistory().map(c => ({ role: roleMap[c.sender] as any, message: c.text }))]
+		chatHistory: [{ role: roleMap.system as any, message: LlmPrompt }, ...history.map(c => ({ role: roleMap[c.sender] as any, message: c.text }))]
 	});
 	// let prompts = [prompt];
 	// if (hiddenContext) prompts.push(hiddenContext);

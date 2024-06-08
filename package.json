@@ -66,6 +66,16 @@
 					"default": "",
 					"description": "ChatGPT API Key for fwCopilot plugin"
 				},
+				"fwCopilot.chatGptEndpoint": {
+					"type": "string",
+					"default": "https://api.openai.com/v1",
+					"description": "ChatGPT Base URL for fwCopilot plugin"
+				},
+				"fwCopilot.chatGptModel": {
+					"type": "string",
+					"default": "gpt-3.5-turbo",
+					"description": "ChatGPT Model for fwCopilot plugin"
+				},
 				"fwCopilot.cohereaiApiKey": {
 					"type": "string",
 					"default": "",

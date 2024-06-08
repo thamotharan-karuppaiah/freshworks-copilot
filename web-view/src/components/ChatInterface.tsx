@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import 'tailwindcss/tailwind.css';
-import useChatStore, { ChatStore } from '../store/chat-message-store';
+import useChatStore, { ChatStore, getHistory } from '../store/chat-message-store';
 import { getChatGptResponse } from '../services/chatgptService';
 import { getGeminiResponse } from '../services/geminiService';
 import { getOtherModelResponse } from '../services/otherModelService';
@@ -33,7 +33,6 @@ const ChatInterface: React.FC = () => {
   const processIfPromptIsFigmaURL = async (inputText: string) => {
     let response = await getFigmaResponse(inputText, (message) => addMessage({ sender: Sender.Bot, text: message, presentationonly: true }));
     let { fileInfo, nodeResponse, nodeImages } = response;
-    // let hiddenPrompt;
     if (nodeResponse) {
       addMessage({
         sender: Sender.Bot, text: '', figmaResponse: response, imgPath: nodeImages.images[fileInfo.nodeID.replace('-', ':')], presentationonly: true, isImage: true, hidden: true
@@ -50,34 +49,38 @@ const ChatInterface: React.FC = () => {
     setLoading(true);
 
     try {
-      let hiddenPrompt;
+      let history = getHistory();
+      let userPrompt = { sender: Sender.User, text: message };
+      let hiddenPrompt = '';
+      addMessage(userPrompt);
       if (checktextHasFigmaUrl(message)) {
-        addMessage({ sender: Sender.User, text: message });
         await processIfPromptIsFigmaURL(message);
       }
       else {
-        addMessage({ sender: Sender.User, text: message });
         if (lastKnownFigmaNode) {
           hiddenPrompt = `HIDDEN:FIGMA HTML : ${createComponent(lastKnownFigmaNode as any, {}, {}, {})}`;
+          let userHidePrompt = { sender: Sender.User, text: hiddenPrompt, hidden: true };
+          addMessage(userHidePrompt);
+          history = [...history, userHidePrompt];
         }
       }
 
       let botResponse = '';
       switch (model) {
         case 'chatgpt':
-          botResponse = await getChatGptResponse(message);
+          botResponse = await getChatGptResponse(history, message);
           break;
         case 'gemini':
-          botResponse = await getGeminiResponse(message, hiddenPrompt);
+          botResponse = await getGeminiResponse(history, message);
           break;
         case 'copilot':
-          botResponse = await getCopilotResponse(message, hiddenPrompt);
+          botResponse = await getCopilotResponse(history, message);
           break;
         case 'cohereai':
-          botResponse = await getCohereAiResponse(message, hiddenPrompt);
+          botResponse = await getCohereAiResponse(history, message);
           break;
         case 'deepai':
-          botResponse = await getDeepAiResponse(message, hiddenPrompt);
+          botResponse = await getCohereAiResponse(history, message);
           break;
         default:
           botResponse = 'Invalid model selected';
@@ -141,7 +144,7 @@ const ChatInterface: React.FC = () => {
             messages.filter(c => !c.hidden || c.presentationonly).map((message, index) => (
               <div
                 key={message.key}
-                className={`max-w-full p-2 rounded-lg m-2 flex flex-col justify-between transform transition-all duration-500 ${message.sender === 'user'
+                className={`chat-message max-w-full p-2 rounded-lg m-2 flex flex-col justify-between transform transition-all duration-500 ${message.sender === 'user'
                   ? 'bg-blue-500 text-white self-end fadeIn'
                   : 'bg-gray-300 text-gray-800 self-start fadeIn'
                   }`}
@@ -157,7 +160,7 @@ const ChatInterface: React.FC = () => {
       </div>
 
       {/* Follow-up suggestions section */}
-      <div className={`max-h-[82px] p-4 text-xs bg-gray-800 flex flex-nowrap slide-up overflow-x-auto ${followupSuggestions.length > 0 ? '' : `hidden`}`}>
+      <div className={`p-4 text-xs bg-gray-800 flex flex-nowrap slide-up overflow-x-auto ${followupSuggestions.length > 0 ? '' : `hidden`}`}>
         {followupSuggestions.map((suggestion, index) => (
           <button
             key={index}

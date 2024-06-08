@@ -81,7 +81,7 @@ const LlmResponse: React.FC<Props> = ({ data }) => {
 				</div>
 			)}
 			{type === 'code' && (
-				<div className="mt-4">
+				<div className="mt-4 has-files">
 					{files?.map((file, index) => (
 						<div key={index} className="mt-2">
 							<div className="font-medium">{file.message}</div>

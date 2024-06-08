@@ -1,5 +1,5 @@
 // services/deepaiService.ts
-import { getHistory } from '../store/chat-message-store';
+import { getHistory, Message } from '../store/chat-message-store';
 import { LlmPrompt, VsCommands } from '../constants';
 import { executeAnyCommand, getConfiguration, getState, openConfiguration } from './vsCodeService';
 import axios from 'axios';
@@ -19,7 +19,7 @@ export const initDeepAiClient = async () => {
 	return deepAiClient = deepAi;
 }
 
-export const getDeepAiResponse = async (prompt: string, hiddenContext?: string) => {
+export const getDeepAiResponse = async (history: Message[], prompt) => {
 	deepAiClient = deepAiClient ? deepAiClient : await initDeepAiClient();
 
 	let result = await deepAiClient.callStandardApi('text-generator', { text: prompt })

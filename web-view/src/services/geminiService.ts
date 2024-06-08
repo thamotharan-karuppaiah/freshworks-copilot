@@ -1,6 +1,6 @@
 // services/geminiService.ts
 import { ChatSession, GenerativeModel, GoogleGenerativeAI } from "@google/generative-ai";
-import { getHistory } from '../store/chat-message-store';
+import { Message, getHistory } from '../store/chat-message-store';
 import { LlmPrompt, VsCommands } from '../constants';
 import { executeAnyCommand, getConfiguration, getState, openConfiguration } from './vsCodeService';
 
@@ -13,7 +13,7 @@ const roleMap = {
 
 let model: GenerativeModel;
 let chatSession: ChatSession;
-export const initSChat = async () => {
+export const initSChat = async (history: Message[]) => {
   let API_KEY = await getConfiguration('geminiApiKey');
   const genAI = new GoogleGenerativeAI(API_KEY);
   model = genAI.getGenerativeModel({
@@ -21,7 +21,7 @@ export const initSChat = async () => {
     systemInstruction: LlmPrompt,
   });
   chatSession = model.startChat({
-    history: getHistory().map(c => ({ role: roleMap[c.sender], parts: [{ text: c.text }] })),
+    history: history.map(c => ({ role: roleMap[c.sender], parts: [{ text: c.text }] })),
     generationConfig: {
       candidateCount: 1
     },
@@ -33,11 +33,9 @@ export const resetChat = async () => {
   chatSession = null;
 }
 
-export const getGeminiResponse = async (prompt: string, hiddenContext?: string) => {
-  chatSession = chatSession ? chatSession : await initSChat();
-  let prompts = [prompt];
-  if (hiddenContext) prompts.push(hiddenContext);
-  const result = await chatSession.sendMessage(prompts);
+export const getGeminiResponse = async (history: Message[], prompt) => {
+  let chatSession = await initSChat(history);
+  const result = await chatSession.sendMessage(prompt);
   const response = await result.response;
   const text = response.text();
   // extract json text form the text like ```json { "type": "text", "message": "Why don't scientists trust atoms? Because they make up everything! 😂" } ```
