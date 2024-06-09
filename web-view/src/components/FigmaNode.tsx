@@ -27,11 +27,6 @@ const FigmaNodeViewer: React.FC<{ fileResponse: figmaJs.FileNodesResponse, image
 		</div>
 	</div>
 	);
-	return (
-		<div style={({ zoom: 0.3 })}>
-			<FigspecFrameViewer style={({ height: "600px", "width": '900px' } as any)} apiResponse={fileResponse} renderedImage={image} onNodeSelect={onNodeSelect}></FigspecFrameViewer>
-		</div>
-	);
 };
 
 export default FigmaNodeViewer;

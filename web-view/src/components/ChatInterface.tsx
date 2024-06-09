@@ -160,7 +160,7 @@ const ChatInterface: React.FC = () => {
       </div>
 
       {/* Follow-up suggestions section */}
-      <div className={`max-h-[72px] p-4 text-xs bg-gray-800 flex flex-nowrap slide-up overflow-x-auto ${followupSuggestions.length > 0 ? '' : `hidden`}`}>
+      <div className={`max-h-[90px] p-4 text-xs bg-gray-800 flex flex-nowrap slide-up overflow-x-auto ${followupSuggestions.length > 0 ? '' : `hidden`}`}>
         {followupSuggestions.map((suggestion, index) => (
           <button
             key={index}

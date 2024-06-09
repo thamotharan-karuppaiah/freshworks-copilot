@@ -2,9 +2,9 @@ import React, { useState } from 'react';
 import { sendCreateFileRequest, sendCopyCliboardRequest, executeAnyCommand } from '../services/vsCodeService';
 import { VsCommands } from '../constants';
 import useChatStore, { Message } from '../store/chat-message-store';
-import Markdown from 'react-markdown'
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
-import { dark } from 'react-syntax-highlighter/dist/esm/styles/prism'
+import Markdown from 'react-markdown';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { dark } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
 interface File {
 	fileType: string;
@@ -30,14 +30,17 @@ const LlmResponse: React.FC<Props> = ({ data }) => {
 	let message: Data = null;
 	try {
 		message = JSON.parse(data);
-	}
-	catch {
+	} catch {
 		message = { type: 'text', message: data, inspectRequested: false };
 	}
 	const { type, message: responseMessage, inspectRequested, files } = message;
 
 	const createFile = (file: File) => {
 		sendCreateFileRequest(file.fileName, file.content);
+	};
+
+	const createAllFiles = () => {
+		files?.forEach((file) => createFile(file));
 	};
 
 	const copyFile = (file: File) => {
@@ -54,15 +57,14 @@ const LlmResponse: React.FC<Props> = ({ data }) => {
 		let figmaDesigns = messages.filter((msg) => msg.hidden && msg.figmaResponse);
 		if (figmaDesigns.length > 1) {
 			setAvailableFigmaDesigns(figmaDesigns);
-		}
-		else if (figmaDesigns.length === 1) {
+		} else if (figmaDesigns.length === 1) {
 			openIspector(figmaDesigns[0]);
 		}
-	}
+	};
 
 	const openIspector = (figmaDesign: Message) => {
 		executeAnyCommand(VsCommands.figmaInspect, { fileResponse: figmaDesign.figmaResponse.nodeResponse, image: figmaDesign.imgPath });
-	}
+	};
 
 	const closeAvailableFigmaDesigns = () => {
 		setAvailableFigmaDesigns([]);
@@ -72,8 +74,8 @@ const LlmResponse: React.FC<Props> = ({ data }) => {
 		return <Markdown children={children}
 			components={{
 				code(props) {
-					const { children, className, node, ...rest } = props
-					const match = /language-(\w+)/.exec(className || '')
+					const { children, className, node, ...rest } = props;
+					const match = /language-(\w+)/.exec(className || '');
 					return match ? (
 						<SyntaxHighlighter
 							{...rest}
@@ -86,9 +88,9 @@ const LlmResponse: React.FC<Props> = ({ data }) => {
 						<code {...rest} className={className}>
 							{children}
 						</code>
-					)
+					);
 				}
-			}}></Markdown>
+			}}></Markdown>;
 	}
 
 	return (
@@ -107,7 +109,15 @@ const LlmResponse: React.FC<Props> = ({ data }) => {
 				</div>
 			)}
 			{type === 'code' && (
-				<div className="mt-4 has-files">
+				<div className="mt-4 has-files relative">
+					{files && files.length > 0 && (
+						<button 
+							className="bg-gray-800 text-gray-300 py-1 px-3 rounded absolute top-0 right-0 mt-2 text-sm" 
+							title='Create all files in the response to your current workspace.'
+							onClick={createAllFiles}>
+							Create all files
+						</button>
+					)}
 					{files?.map((file, index) => (
 						<div key={index} className="mt-2">
 							<div className="font-medium">{file.message}</div>
