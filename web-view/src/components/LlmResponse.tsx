@@ -2,6 +2,9 @@ import React, { useState } from 'react';
 import { sendCreateFileRequest, sendCopyCliboardRequest, executeAnyCommand } from '../services/vsCodeService';
 import { VsCommands } from '../constants';
 import useChatStore, { Message } from '../store/chat-message-store';
+import Markdown from 'react-markdown'
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
+import { dark } from 'react-syntax-highlighter/dist/esm/styles/prism'
 
 interface File {
 	fileType: string;
@@ -65,9 +68,32 @@ const LlmResponse: React.FC<Props> = ({ data }) => {
 		setAvailableFigmaDesigns([]);
 	};
 
+	function MarkDownIt({ children }) {
+		return <Markdown children={children}
+			components={{
+				code(props) {
+					const { children, className, node, ...rest } = props
+					const match = /language-(\w+)/.exec(className || '')
+					return match ? (
+						<SyntaxHighlighter
+							{...rest}
+							PreTag="div"
+							children={String(children).replace(/\n$/, '')}
+							language={match[1]}
+						// style={dark}
+						/>
+					) : (
+						<code {...rest} className={className}>
+							{children}
+						</code>
+					)
+				}
+			}}></Markdown>
+	}
+
 	return (
 		<>
-			<div>{responseMessage}</div>
+			<div><MarkDownIt>{responseMessage}</MarkDownIt></div>
 			{inspectRequested && <button className="bg-blue-500 text-white py-2 px-4 rounded mt-2 hover:bg-blue-600" onClick={onInspectFigma}>Inspect</button>}
 			{availableFigmaDesigns.length > 0 && (
 				<div className="mt-4 p-2 border rounded relative">
@@ -94,7 +120,8 @@ const LlmResponse: React.FC<Props> = ({ data }) => {
 								<a className="cursor-pointer font-medium ml-2" onClick={() => createFile(file)}>Create file</a>
 							</div>
 							<div className={`p-2 bg-gray-100 text-xs relative overflow-hidden ${showFullContent ? '' : 'max-h-40 overflow-y-scroll'}`}>
-								<pre className="whitespace-pre-wrap">{file.content}</pre>
+								{/* <pre className="whitespace-pre-wrap">{"~~~" + file.fileType + " \n " + file.content + " \n~~~"}</pre> */}
+								<MarkDownIt children={"```" + file.fileType + " \n" + file.content + " \n```"}></MarkDownIt>
 								{!showFullContent && (
 									<button className="absolute bottom-0 right-0 bg-gray-200 text-blue-500 px-2 py-1 rounded-md" onClick={toggleShowContent}>Show more</button>
 								)}
