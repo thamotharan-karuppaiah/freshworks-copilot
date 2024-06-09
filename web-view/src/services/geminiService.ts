@@ -1,8 +1,8 @@
 // services/geminiService.ts
 import { ChatSession, GenerativeModel, GoogleGenerativeAI } from "@google/generative-ai";
-import { Message, getHistory } from '../store/chat-message-store';
-import { LlmPrompt, VsCommands } from '../constants';
-import { executeAnyCommand, getConfiguration, getState, openConfiguration } from './vsCodeService';
+import { Message } from '../store/chat-message-store';
+import { LlmPrompt, processMessage } from '../constants';
+import { getConfiguration } from './vsCodeService';
 
 
 const roleMap = {
@@ -38,12 +38,5 @@ export const getGeminiResponse = async (history: Message[], prompt) => {
   const result = await chatSession.sendMessage(prompt);
   const response = await result.response;
   const text = response.text();
-  // extract json text form the text like ```json { "type": "text", "message": "Why don't scientists trust atoms? Because they make up everything! 😂" } ```
-  const jsonText = text.match(/```json(.*)```/s);
-  if (jsonText && jsonText[1]) {
-    return jsonText[1];
-  }
-  else {
-    return text;
-  }
+  return processMessage(text)
 };

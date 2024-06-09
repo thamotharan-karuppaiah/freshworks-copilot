@@ -12,7 +12,18 @@ export function registerWebViewEvents(webview: vscode.Webview) {
 				}
 			case 'createFile':
 				{
-					sendCreateFileRequest(data.fileName, data.text);
+					await sendCreateFileRequest(data.fileName, data.text);
+
+					vscode.window.showInformationMessage('File created');
+					break;
+				}
+			case 'createFiles':
+				{
+					(data.files as { fileName: string, content: string }[]).forEach(async file => {
+						await sendCreateFileRequest(file.fileName, file.content, true);
+					});
+
+					vscode.window.showInformationMessage('Files created');
 					break;
 				}
 			case 'openConfiguration':

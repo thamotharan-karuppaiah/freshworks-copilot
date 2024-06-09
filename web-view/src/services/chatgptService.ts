@@ -1,7 +1,7 @@
 import OpenAI from "openai";
-import { Message, getHistory } from '../store/chat-message-store';
-import { LlmPrompt, VsCommands } from '../constants';
-import { executeAnyCommand, getConfiguration, getState, openConfiguration } from './vsCodeService';
+import { Message } from '../store/chat-message-store';
+import { LlmPrompt, processMessage } from '../constants';
+import { getConfiguration } from './vsCodeService';
 import { ChatCompletionCreateParamsNonStreaming } from "openai/resources";
 
 const roleMap = {
@@ -29,12 +29,6 @@ export const getChatGptResponse = async (history: Message[], prompt) => {
 
   let result = await openai.chat.completions.create(chatCompletionParams);;
   let text = result.choices[0].message.content;
-
-  // Extract JSON text from the text like ```json { "type": "text", "message": "Why don't scientists trust atoms? Because they make up everything! 😂" } ```
-  const jsonText = text.match(/```json(.*)```/s);
-  if (jsonText && jsonText[1]) {
-    return jsonText[1];
-  } else {
-    return text;
-  }
+  return processMessage(text);
+ 
 };

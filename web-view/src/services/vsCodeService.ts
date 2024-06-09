@@ -1,4 +1,3 @@
-import exp from "constants";
 import { VsCommands } from "../constants";
 import useVsCodeMessageStore from "../store/vsCodeMessageStore";
 type VsCodeMessageCommand = 'copilotResponse';
@@ -36,6 +35,10 @@ export function sendCopyCliboardRequest(text) {
 
 export function sendCreateFileRequest(fileName, text) {
 	vsCode.postMessage({ command: 'createFile', text: text, fileName: fileName })
+}
+
+export function sendCreateFilesRequest(files) {
+	vsCode.postMessage({ command: 'createFiles', files})
 }
 
 export function openConfiguration(key) {

@@ -1,8 +1,7 @@
 // services/deepaiService.ts
-import { getHistory, Message } from '../store/chat-message-store';
-import { LlmPrompt, VsCommands } from '../constants';
-import { executeAnyCommand, getConfiguration, getState, openConfiguration } from './vsCodeService';
-import axios from 'axios';
+import { processMessage } from '../constants';
+import { Message } from '../store/chat-message-store';
+import { getConfiguration } from './vsCodeService';
 import * as deepAi from 'deepai';
 
 const roleMap = {
@@ -25,12 +24,5 @@ export const getDeepAiResponse = async (history: Message[], prompt) => {
 	let result = await deepAiClient.callStandardApi('text-generator', { text: prompt })
 
 	const text = result.data.output;
-
-	// extract json text from the text like ```json { "type": "text", "message": "Why don't scientists trust atoms? Because they make up everything! 😂" } ```
-	const jsonText = text.match(/```json(.*)```/s);
-	if (jsonText && jsonText[1]) {
-		return jsonText[1];
-	} else {
-		return text;
-	}
+	return processMessage(text);
 };

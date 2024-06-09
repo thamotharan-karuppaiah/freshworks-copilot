@@ -1,6 +1,6 @@
 // services/geminiService.ts
 import { getHistory, Message } from '../store/chat-message-store';
-import { LlmPrompt, VsCommands } from '../constants';
+import { LlmPrompt, processMessage, VsCommands } from '../constants';
 import { executeAnyCommand, getConfiguration, getState, openConfiguration } from './vsCodeService';
 import { CohereClient } from "cohere-ai"
 
@@ -25,17 +25,6 @@ export const getCohereAiResponse = async (history: Message[], prompt) => {
 		message: prompt,
 		chatHistory: [{ role: roleMap.system as any, message: LlmPrompt }, ...history.map(c => ({ role: roleMap[c.sender] as any, message: c.text }))]
 	});
-	// let prompts = [prompt];
-	// if (hiddenContext) prompts.push(hiddenContext);
-	// const result = await chatSession.sendMessage(prompts);
-	// const response = await result.response;
 	const text = response.text;
-	// extract json text form the text like ```json { "type": "text", "message": "Why don't scientists trust atoms? Because they make up everything! 😂" } ```
-	const jsonText = text.match(/```json(.*)```/s);
-	if (jsonText && jsonText[1]) {
-		return jsonText[1];
-	}
-	else {
-		return text;
-	}
+	return processMessage(text);
 };

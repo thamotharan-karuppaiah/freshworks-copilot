@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { sendCreateFileRequest, sendCopyCliboardRequest, executeAnyCommand } from '../services/vsCodeService';
-import { VsCommands } from '../constants';
+import { sendCreateFileRequest, sendCopyCliboardRequest, executeAnyCommand, sendCreateFilesRequest } from '../services/vsCodeService';
+import { VsCommands, parseMessage } from '../constants';
 import useChatStore, { Message } from '../store/chat-message-store';
 import Markdown from 'react-markdown';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
@@ -28,11 +28,8 @@ const LlmResponse: React.FC<Props> = ({ data }) => {
 	let { messages } = useChatStore();
 	let [availableFigmaDesigns, setAvailableFigmaDesigns] = useState<Message[]>([]);
 	let message: Data = null;
-	try {
-		message = JSON.parse(data);
-	} catch {
-		message = { type: 'text', message: data, inspectRequested: false };
-	}
+	message = parseMessage(data);
+	
 	const { type, message: responseMessage, inspectRequested, files } = message;
 
 	const createFile = (file: File) => {
@@ -40,14 +37,14 @@ const LlmResponse: React.FC<Props> = ({ data }) => {
 	};
 
 	const createAllFiles = () => {
-		files?.forEach((file) => createFile(file));
+		sendCreateFilesRequest(files);
 	};
 
 	const copyFile = (file: File) => {
 		sendCopyCliboardRequest(file.content);
 	};
 
-	const [showFullContent, setShowFullContent] = useState<boolean>(false);
+	const [showFullContent, setShowFullContent] = useState<boolean>(true);
 
 	const toggleShowContent = () => {
 		setShowFullContent(!showFullContent);
@@ -111,8 +108,8 @@ const LlmResponse: React.FC<Props> = ({ data }) => {
 			{type === 'code' && (
 				<div className="mt-4 has-files relative">
 					{files && files.length > 0 && (
-						<button 
-							className="bg-gray-800 text-gray-300 py-1 px-3 rounded absolute top-0 right-0 mt-2 text-sm" 
+						<button
+							className="bg-gray-800 text-gray-300 py-1 px-3 rounded absolute top-0 right-0 mt-2 text-sm"
 							title='Create all files in the response to your current workspace.'
 							onClick={createAllFiles}>
 							Create all files

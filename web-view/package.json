@@ -46,6 +46,7 @@
     "jest-resolve": "^27.4.2",
     "jest-watch-typeahead": "^1.0.0",
     "js-beautify": "^1.15.1",
+    "jsonrepair": "^3.8.0",
     "mini-css-extract-plugin": "^2.4.5",
     "openai": "^4.47.3",
     "postcss": "^8.4.4",
@@ -77,6 +78,7 @@
     "webpack-dev-server": "^4.6.0",
     "webpack-manifest-plugin": "^4.0.2",
     "workbox-webpack-plugin": "^6.4.1",
+    "yaml": "^2.4.5",
     "zustand": "^4.5.2"
   },
   "scripts": {

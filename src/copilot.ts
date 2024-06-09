@@ -30,7 +30,7 @@ export const sendCopyCliboardRequest = async (text: string) => {
 	vscode.window.showInformationMessage('Text copied to clipboard');
 }
 
-export const sendCreateFileRequest = async (fileName: string, text: string) => {
+export const sendCreateFileRequest = async (fileName: string, text: string, saveAutomatically = false) => {
 	// find the base path the workspace
 	let appSrc = vscode.workspace.workspaceFolders?.[0]?.uri as vscode.Uri;
 	let targetFilePath: vscode.Uri;
@@ -59,8 +59,11 @@ export const sendCreateFileRequest = async (fileName: string, text: string) => {
 	await editor.edit(editBuilder => {
 		editBuilder.insert(new vscode.Position(0, 0), text);
 	});
-	//show alert
-	vscode.window.showInformationMessage('File created');
+
+	// Save the file
+	if (saveAutomatically) {
+		await document.save();
+	}
 }
 
 

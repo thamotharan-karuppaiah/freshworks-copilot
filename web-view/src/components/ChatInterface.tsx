@@ -3,14 +3,13 @@ import 'tailwindcss/tailwind.css';
 import useChatStore, { ChatStore, getHistory } from '../store/chat-message-store';
 import { getChatGptResponse } from '../services/chatgptService';
 import { getGeminiResponse } from '../services/geminiService';
-import { getOtherModelResponse } from '../services/otherModelService';
 import { getCopilotResponse } from '../services/githubCopilot';
 import { getFigmaResponse } from '../services/figmaApiService';
 import { getCohereAiResponse } from '../services/coherAiService';
-import { checktextHasFigmaUrl, extractFileNodeId, getNodeResponse } from '../util/figma';
+import { checktextHasFigmaUrl, extractFileNodeId } from '../util/figma';
 import FigmaNodeViewer from './FigmaNode';
 import LlmResponse from './LlmResponse';
-import { Sender } from '../constants';
+import { Sender, parseMessage } from '../constants';
 import { getDeepAiResponse } from '../services/deepAiService';
 import EmptyState from './EmptyState';
 import useVsCodeMessageStore from '../store/vsCodeMessageStore';
@@ -80,14 +79,14 @@ const ChatInterface: React.FC = () => {
           botResponse = await getCohereAiResponse(history, message);
           break;
         case 'deepai':
-          botResponse = await getCohereAiResponse(history, message);
+          botResponse = await getDeepAiResponse(history, message);
           break;
         default:
           botResponse = 'Invalid model selected';
       }
 
       try {
-        let followUpResponse = JSON.parse(botResponse).followups || [];
+        let followUpResponse =  parseMessage(botResponse).followups || [];
         setfollowupSuggestions(followUpResponse)
       }
       catch {
@@ -160,7 +159,7 @@ const ChatInterface: React.FC = () => {
       </div>
 
       {/* Follow-up suggestions section */}
-      <div className={`max-h-[90px] p-4 text-xs bg-gray-800 flex flex-nowrap slide-up overflow-x-auto ${followupSuggestions.length > 0 ? '' : `hidden`}`}>
+      <div className={`p-4 text-xs bg-gray-800 flex flex-nowrap slide-up overflow-x-auto ${followupSuggestions.length > 0 ? '' : `hidden`}`}>
         {followupSuggestions.map((suggestion, index) => (
           <button
             key={index}

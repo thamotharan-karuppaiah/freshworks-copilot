@@ -1,6 +1,6 @@
 // store.ts
 import { FileImageResponse, FileNodesResponse } from 'figma-js';
-import { create, useStore } from 'zustand';
+import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { FigmaFileInfo } from '../util/figma';
 import { Sender } from "../constants"
