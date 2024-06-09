@@ -34,7 +34,7 @@ const ChatInterface: React.FC = () => {
     let { fileInfo, nodeResponse, nodeImages } = response;
     if (nodeResponse) {
       addMessage({
-        sender: Sender.Bot, text: '', figmaResponse: response, imgPath: nodeImages.images[fileInfo.nodeID.replace('-', ':')], presentationonly: true, isImage: true, hidden: true
+        sender: Sender.Bot, text: '', figmaResponse: response, imgPath: nodeImages.images?.[fileInfo.nodeID.replace('-', ':')], presentationonly: true, isImage: true, hidden: true
       });
     }
   }
