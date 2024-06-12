@@ -10,8 +10,10 @@ type VsCodeMessage = {
 let vsCode = window.acquireVsCodeApi?.()
 
 window.addEventListener('message', event => {
-	console.log('Received', event);
 	let eventData = event.data as VsCodeMessage;
+	if (!eventData?.command) {
+		return;
+	}
 	useVsCodeMessageStore.setState({ message: eventData });
 });
 
@@ -38,7 +40,7 @@ export function sendCreateFileRequest(fileName, text) {
 }
 
 export function sendCreateFilesRequest(files) {
-	vsCode.postMessage({ command: 'createFiles', files})
+	vsCode.postMessage({ command: 'createFiles', files })
 }
 
 export function openConfiguration(key) {
