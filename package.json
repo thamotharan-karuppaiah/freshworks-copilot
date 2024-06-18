@@ -85,6 +85,11 @@
 					"type": "string",
 					"default": "",
 					"description": "DeepAI API Key for fwCopilot plugin"
+				},
+				"fwCopilot.promptResponseType": {
+					"type": "string",
+					"default": "json",
+					"description": "Prompt Response Type for fwCopilot plugin. Default is json. Possible values are json, xml"
 				}
 			}
 		}

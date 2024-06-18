@@ -23,7 +23,7 @@ export const getCohereAiResponse = async (history: Message[], prompt) => {
 	client = client ? client : await initClient();
 	let response = await client.chat({
 		message: prompt,
-		chatHistory: [{ role: roleMap.system as any, message: LlmPrompt }, ...history.map(c => ({ role: roleMap[c.sender] as any, message: c.text }))]
+		chatHistory: [{ role: roleMap.system as any, message: LlmPrompt() }, ...history.map(c => ({ role: roleMap[c.sender] as any, message: c.text }))]
 	});
 	const text = response.text;
 	return processMessage(text);

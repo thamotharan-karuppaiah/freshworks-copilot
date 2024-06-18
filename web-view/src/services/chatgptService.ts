@@ -24,7 +24,7 @@ export const initChatGPT = async () => {
 export const getChatGptResponse = async (history: Message[], prompt) => {
   await initChatGPT();
   const messageHistory = history.map(c => ({ role: roleMap[c.sender], content: c.text })) as any;
-  let messages = [{ role: roleMap.system, content: LlmPrompt }, ...messageHistory, { role: roleMap.user, content: prompt }];
+  let messages = [{ role: roleMap.system, content: LlmPrompt() }, ...messageHistory, { role: roleMap.user, content: prompt }];
   let chatCompletionParams: ChatCompletionCreateParamsNonStreaming = { messages: messages, model: model };
 
   let result = await openai.chat.completions.create(chatCompletionParams);;

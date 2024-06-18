@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import 'tailwindcss/tailwind.css';
 import useChatStore, { ChatStore, getHistory } from '../store/chat-message-store';
 import { getChatGptResponse } from '../services/chatgptService';
@@ -19,7 +19,7 @@ import { createComponent } from '../util/figma-html';
 const ChatInterface: React.FC = () => {
   const { messages, addMessage, clearMessages, lastKnownFigmaNode, setLastKnownFigmaNode }: ChatStore = useChatStore();
   const vsCodeMessage = useVsCodeMessageStore((state) => state.message);
-  const [inputText, setInputText] = useState('');
+  const inputTextRef = useRef<HTMLInputElement>();
   const [loading, setLoading] = useState(false);
   const [model, setModel] = useState('gemini');
   const [followupSuggestions, setfollowupSuggestions] = useState<string[]>([]);
@@ -41,10 +41,10 @@ const ChatInterface: React.FC = () => {
 
   const sendMessage = async (messageText?: string) => {
     setfollowupSuggestions([]);
-    const message = messageText || inputText;
+    const message = messageText || inputTextRef.current.value;
     if (message.trim() === '') return;
 
-    setInputText('');
+    inputTextRef.current.value = '';
     setLoading(true);
 
     try {
@@ -86,7 +86,7 @@ const ChatInterface: React.FC = () => {
       }
 
       try {
-        let followUpResponse =  parseMessage(botResponse).followups || [];
+        let followUpResponse = parseMessage(botResponse).followups || [];
         setfollowupSuggestions(followUpResponse)
       }
       catch {
@@ -186,10 +186,10 @@ const ChatInterface: React.FC = () => {
           <div className="p-4 bg-gray-800 flex items-center">
             <input
               type="text"
+              ref={inputTextRef}
               className="flex-1 p-2 rounded-lg "
               placeholder="Type a message..."
-              value={inputText}
-              onChange={(e) => setInputText(e.target.value)}
+              onChange={(e) => inputTextRef.current.value = e.target.value}
               onKeyDown={(e) => {
                 if (e.key === 'Enter') sendMessage();
               }}
