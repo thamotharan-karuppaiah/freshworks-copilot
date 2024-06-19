@@ -1,5 +1,5 @@
 // store.ts
-import { FileImageResponse, FileNodesResponse } from 'figma-js';
+import { FileImageResponse, FileNodesResponse, FileImageFillsResponse } from 'figma-js';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { FigmaFileInfo } from '../util/figma';
@@ -19,6 +19,7 @@ export interface Message {
 		nodeResponse: FileNodesResponse,
 		fileInfo: FigmaFileInfo,
 		nodeImages: FileImageResponse,
+		fileImageFillsResponse: FileImageFillsResponse
 	}
 }
 

@@ -41,18 +41,18 @@ export function registerWebViewEvents(webview: vscode.Webview) {
 	});
 }
 
-export function registerFigmaWebViewEvents(webview: vscode.Webview, fileResponse: any, image: any) {
+export function registerFigmaWebViewEvents(webview: vscode.Webview, fileResponse: any, image: any, fileImageFillsResponse: any) {
 	webview.onDidReceiveMessage(async data => {
 		switch (data.command) {
 			case 'figmaDataRequest':
 				{
-					webview.postMessage({ ...data, fileResponse: fileResponse, image: image });
+					webview.postMessage({ ...data, fileResponse: fileResponse, image: image, fileImageFillsResponse });
 					break;
 				}
 
 			case 'figmaNodeSelected':
 				{
-					chatWebView?.postMessage({ command: 'figmaNodeSelected', selectedNode: data.selectedNode, fileResponse: fileResponse, image: image });
+					chatWebView?.postMessage({ command: 'figmaNodeSelected', selectedNode: data.selectedNode, fileResponse: fileResponse, image: image, fileImageFillsResponse });
 					const selectedNode = data.selectedNode;
 					break;
 				}

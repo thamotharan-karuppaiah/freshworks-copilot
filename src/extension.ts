@@ -25,7 +25,7 @@ export function activate(context: vscode.ExtensionContext) {
 		return meesage;
 	}));
 
-	context.subscriptions.push(vscode.commands.registerCommand('figma.inspect', async (data: { fileResponse: any, image: any }) => {
+	context.subscriptions.push(vscode.commands.registerCommand('figma.inspect', async (data: { fileResponse: any, image: any, fileImageFillsResponse: any }) => {
 		const panel = vscode.window.createWebviewPanel(
 			'figmaInspector',
 			'Figma Inspector: ' + data.fileResponse.name,
@@ -36,7 +36,7 @@ export function activate(context: vscode.ExtensionContext) {
 		);
 		openFigmaInspectorView(panel.webview, context.extensionUri);
 		panel.reveal(vscode.ViewColumn.Active);
-		registerFigmaWebViewEvents(panel.webview, data.fileResponse, data.image);
+		registerFigmaWebViewEvents(panel.webview, data.fileResponse, data.image, data.fileImageFillsResponse);
 	}))
 }
 

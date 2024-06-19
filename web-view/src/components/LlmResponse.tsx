@@ -29,7 +29,7 @@ const LlmResponse: React.FC<Props> = ({ data }) => {
 	let [availableFigmaDesigns, setAvailableFigmaDesigns] = useState<Message[]>([]);
 	let message: Data = null;
 	message = parseMessage(data);
-	
+
 	const { type, message: responseMessage, inspectRequested, files } = message;
 
 	const createFile = (file: File) => {
@@ -60,7 +60,7 @@ const LlmResponse: React.FC<Props> = ({ data }) => {
 	};
 
 	const openIspector = (figmaDesign: Message) => {
-		executeAnyCommand(VsCommands.figmaInspect, { fileResponse: figmaDesign.figmaResponse.nodeResponse, image: figmaDesign.imgPath });
+		executeAnyCommand(VsCommands.figmaInspect, { fileResponse: figmaDesign.figmaResponse.nodeResponse, image: figmaDesign.imgPath, fileImageFillsResponse: figmaDesign.figmaResponse.fileImageFillsResponse });
 	};
 
 	const closeAvailableFigmaDesigns = () => {
@@ -109,7 +109,7 @@ const LlmResponse: React.FC<Props> = ({ data }) => {
 				<div className="mt-4 has-files relative">
 					{files && files.length > 0 && (
 						<button
-							className="bg-gray-800 text-gray-300 py-1 px-3 rounded absolute top-0 right-0 mt-2 text-sm"
+							className="bg-gray-800 text-gray-300 py-1 px-3 rounded absolute top-0 right-0 mt-2 text-sm hidden"
 							title='Create all files in the response to your current workspace.'
 							onClick={createAllFiles}>
 							Create all files

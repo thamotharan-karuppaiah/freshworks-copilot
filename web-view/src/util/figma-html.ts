@@ -11,87 +11,86 @@ function convertNodeToHTML(node: Node, imageMap?): string {
     case 'COMPONENT':
     case 'INSTANCE':
     case 'CANVAS':
-      return convertContainerNodeToHTML(node);
+      return convertContainerNodeToHTML(node, imageMap);
     case 'RECTANGLE':
-      return convertRectangleToHTML(node as Rectangle);
+      return convertRectangleToHTML(node as Rectangle, imageMap);
     case 'TEXT':
-      return convertTextToHTML(node as Text);
+      return convertTextToHTML(node as Text, imageMap);
     case 'ELLIPSE':
-      return convertEllipseToHTML(node as Ellipse);
+      return convertEllipseToHTML(node as Ellipse, imageMap);
     case 'REGULAR_POLYGON':
-      return convertPolygonToHTML(node as RegularPolygon);
+      return convertPolygonToHTML(node as RegularPolygon, imageMap);
     case 'STAR':
-      return convertStarToHTML(node as Star);
+      return convertStarToHTML(node as Star, imageMap);
     case 'LINE':
-      return convertLineToHTML(node as Line);
+      return convertLineToHTML(node as Line, imageMap);
     case 'VECTOR':
-      return convertVectorToHTML(node as Vector);
+      return convertVectorToHTML(node as Vector, imageMap);
     case 'SLICE':
-      return convertSliceToHTML(node as Slice);
+      return convertSliceToHTML(node as Slice, imageMap);
     case 'BOOLEAN_OPERATION':
-      return convertBooleanOperationToHTML(node as BooleanOperation);
+      return convertBooleanOperationToHTML(node as BooleanOperation, imageMap);
     default:
       return '';
   }
 }
 
 
-function convertContainerNodeToHTML(node: Frame | Group | Component | Instance | Canvas): string {
+function convertContainerNodeToHTML(node: Frame | Group | Component | Instance | Canvas, imageMap?): string {
   let html = '';
   if (node.children) {
     for (const child of node.children.filter(child => child.visible !== false)) {
-      let relativeParent = (child as any).layoutPositioning === 'ABSOLUTE' ? node : (node as any).relativeParent;
-      html += convertNodeToHTML({ ...child, parent: node, rootNode: (node as any).rootNode } as any, relativeParent); //THAMO
+      html += convertNodeToHTML({ ...child, parent: node, rootNode: (node as any).rootNode } as any, imageMap); //THAMO
     }
   }
-  return `<div data-node-name="${node.name}" class="${node.type.toLowerCase()}" style="${convertStylesToCSS(node)}">${html}</div>`;
+  return `<div data-node-name="${node.name}" class="${node.type.toLowerCase()}" style="${convertStylesToCSS(node, imageMap)}">${html}</div>`;
 }
 
-function convertRectangleToHTML(node: Rectangle): string {
-  return `<div class="rectangle" style="${convertStylesToCSS(node)}"></div>`;
+function convertRectangleToHTML(node: Rectangle, imageMap?): string {
+  return `<div class="rectangle" style="${convertStylesToCSS(node, imageMap)}"></div>`;
 }
 
-function convertTextToHTML(node: Text): string {
+function convertTextToHTML(node: Text, imageMap?): string {
   const tagName = determineTextTag(node);
-  return `<${tagName} class="text" style="${convertStylesToCSS(node)}">${node.characters}</${tagName}>`;
+  return `<${tagName} class="text" style="${convertStylesToCSS(node, imageMap)}">${node.characters}</${tagName}>`;
 }
 
-function convertEllipseToHTML(node: Ellipse): string {
-  return `<div class="ellipse" style="${convertStylesToCSS(node)} border-radius: 50%;"></div>`;
+function convertEllipseToHTML(node: Ellipse, imageMap?): string {
+  return `<div class="ellipse" style="${convertStylesToCSS(node, imageMap)} border-radius: 50%;"></div>`;
 }
 
-function convertPolygonToHTML(node: RegularPolygon): string {
+function convertPolygonToHTML(node: RegularPolygon, imageMap?): string {
   // Placeholder: Implement polygon conversion logic here
-  return `<div class="polygon" style="${convertStylesToCSS(node)}"></div>`;
+  return `<div class="polygon" style="${convertStylesToCSS(node, imageMap)}"></div>`;
 }
 
-function convertStarToHTML(node: Star): string {
+function convertStarToHTML(node: Star, imageMap?): string {
   // Placeholder: Implement star conversion logic here
-  return `<div class="star" style="${convertStylesToCSS(node)}"></div>`;
+  return `<div class="star" style="${convertStylesToCSS(node, imageMap)}"></div>`;
 }
 
-function convertLineToHTML(node: Line): string {
+function convertLineToHTML(node: Line, imageMap?): string {
   // Placeholder: Implement line conversion logic here
-  return `<div class="line" style="${convertStylesToCSS(node)}"></div>`;
+  return `<div class="line" style="${convertStylesToCSS(node, imageMap)}"></div>`;
 }
 
 
-function convertVectorToHTML(node: Vector): string {
+function convertVectorToHTML(node: Vector, imageMap?): string {
   // Placeholder: Implement vector conversion logic here
-  return `<div class="vector" style="${convertStylesToCSS(node)};background: #92A2B1;visibility:hidden;"></div>`;
+  return `<div class="vector" style="${convertStylesToCSS(node, imageMap)};background: #92A2B1;visibility:hidden;"></div>`;
 }
 
-function convertSliceToHTML(node: Slice): string {
+function convertSliceToHTML(node: Slice, imageMap?): string {
   // Placeholder: Implement slice conversion logic here
-  return `<div class="slice" style="${convertStylesToCSS(node)}"></div>`;
+  return `<div class="slice" style="${convertStylesToCSS(node, imageMap)}"></div>`;
 }
 
-function convertBooleanOperationToHTML(node: BooleanOperation): string {
+function convertBooleanOperationToHTML(node: BooleanOperation, imageMap?): string {
   // Placeholder: Implement boolean operation conversion logic here
-  return `<div class="boolean-operation" style="${convertStylesToCSS(node)}"></div>`;
+  return `<div class="boolean-operation" style="${convertStylesToCSS(node, imageMap)}"></div>`;
 }
 
-function determineTextTag(node: Text): string {
+function determineTextTag(node: Text, imageMap?): string {
   const fontSize = node.style.fontSize;
   // if (fontSize >= 32) return 'h1';
   // if (fontSize >= 24) return 'h2';
@@ -106,8 +105,10 @@ function convertStylesToCSS1(node: Node | any): string {
 
   // Positioning and size
   if (node.absoluteBoundingBox) {
-    styles += `width: ${node.absoluteBoundingBox.width}px; `;
-    styles += `height: ${node.absoluteBoundingBox.height}px; `;
+    // keep only two decimal point
+
+    styles += `width: ${node.absoluteBoundingBox.width.toFixed(2)}px; `;
+    styles += `height: ${node.absoluteBoundingBox.height.toFixed(2)}px; `;
     if (node.relativeTransform) {
       styles += `transform: translate(${node.relativeTransform[0][2]}px, ${node.relativeTransform[1][2]}px); `;
     }

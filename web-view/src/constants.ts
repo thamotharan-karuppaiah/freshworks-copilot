@@ -1,8 +1,5 @@
 
-
-import { parse, stringify } from 'yaml'
 import { XMLParser } from "fast-xml-parser";
-import exp from 'constants';
 import { getConfiguration } from './services/vsCodeService';
 
 let promptResponseType = 'json';
@@ -116,7 +113,7 @@ export const parseMessage = (message: string) => {
       return convertXmlToJson(message);
     }
     else {
-      const parsedData = parse(message);
+      const parsedData = JSON.parse(message);
       if (!parsedData.type) {
         return { type: 'text', message: message, inspectRequested: false };
       }

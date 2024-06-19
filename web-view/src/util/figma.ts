@@ -33,7 +33,7 @@ const getClient = async () => {
 }
 
 
-export async function getNodeResponse(fileId: string, nodeId: string): Promise<[figmaJs.FileNodesResponse, figmaJs.FileImageResponse]> {
+export async function getNodeResponse(fileId: string, nodeId: string): Promise<[figmaJs.FileNodesResponse, figmaJs.FileImageResponse, figmaJs.FileImageFillsResponse]> {
 	let client = await getClient();
 	const nodeResponse = client.fileNodes(fileId, { ids: [nodeId] })
 		.then((response) => {
@@ -49,6 +49,13 @@ export async function getNodeResponse(fileId: string, nodeId: string): Promise<[
 		.catch((error) => {
 			return error;
 		});;
-	return [await nodeResponse, await nodeImages]
+
+	let externalImages = client.fileImageFills(fileId).then((response) => {
+		return response.data;
+	})
+		.catch((error) => {
+			return error;
+		});;
+	return [await nodeResponse, await nodeImages, await externalImages]
 }
 

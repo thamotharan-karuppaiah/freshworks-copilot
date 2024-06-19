@@ -1,13 +1,13 @@
 import { Document, Node, Frame, Rectangle, Text, Group, Vector, Component, Instance, Ellipse, RegularPolygon, Star, Line, Slice, BooleanOperation, Paint, Canvas } from 'figma-js';
 
-export function convertStylesToCSS(node: Node | any): string {
+export function convertStylesToCSS(node: Node | any, imageMap?): string {
     let styles = '';
 
     styles += getPositioningAndSizeStyles(node);
     styles += getFlexProperties(node);
     styles += getPaddingStyles(node);
     styles += getBackgroundColor(node);
-    styles += getBackground(node);
+    styles += getBackground(node, imageMap);
     styles += getTextColor(node);
     styles += getBorderStyles(node);
     styles += getBorderRadius(node);
@@ -18,15 +18,19 @@ export function convertStylesToCSS(node: Node | any): string {
     return styles;
 }
 
-function getBackground(node: any) {
+function getBackground(node: any, imageMap?) {
     let styles = '';
     if (node.type !== 'TEXT' && 'background' in node && node.background.length > 0) {
-        styles += `background: ${convertBackgroundToCSS(node.fills[0])}; `;
+        let bgStyle = convertBackgroundToCSS(node.fills[0], imageMap);
+        if (bgStyle)
+            styles += `background: ${bgStyle}; `;
+    } else if (node.type === 'RECTANGLE' && 'fills' in node && node.fills.length > 0 && node.fills[0].type === 'IMAGE') {
+        styles += `background: ${convertBackgroundToCSS(node.fills[0], imageMap)} no-repeat;; background-size: contain;`;
     }
     return styles;
 }
 
-function convertBackgroundToCSS(paint) {
+function convertBackgroundToCSS(paint, imageMap) {
     if (paint.type === 'SOLID') {
         const color = paint.color;
         return `rgba(${Math.round(color.r * 255)}, ${Math.round(color.g * 255)}, ${Math.round(color.b * 255)}, ${paint.opacity !== undefined ? paint.opacity : color.a})`;
@@ -44,11 +48,12 @@ function convertBackgroundToCSS(paint) {
         }).join(', ');
         return `radial-gradient(circle, ${gradientStops})`;
     } else if (paint.type === 'IMAGE') {
-        return `url(${paint.imageUrl})`;
+        const image = imageMap[paint.imageRef];
+        return `url(${image})`;
     } else if (paint.type === 'GRADIENT_ANGULAR' || paint.type === 'GRADIENT_DIAMOND') {
         // Add similar implementations for these gradients if needed
     }
-    return 'transparent';
+    return '';
 }
 
 function calculateGradientAngle(gradientHandlePositions) {
@@ -162,7 +167,9 @@ function getPaddingStyles(node: Node | any): string {
 function getBackgroundColor(node: Node | any): string {
     let styles = '';
     if (node.type !== 'TEXT' && 'fills' in node && node.fills.length > 0) {
-        styles += `background-color: ${convertPaintToCSS(node.fills[0])}; `;
+        const style = convertPaintToCSS(node.fills[0]);
+        if (style)
+            styles += `background-color: ${style}; `;
     }
     if (node.type !== 'TEXT' && 'background' in node && node.background.length > 0) {
     }
@@ -172,7 +179,9 @@ function getBackgroundColor(node: Node | any): string {
 function getTextColor(node: Node | any): string {
     let styles = '';
     if (node.type === 'TEXT' && 'fills' in node && node.fills.length > 0) {
-        styles += `color: ${convertPaintToCSS(node.fills[0])}; `;
+        const style = convertPaintToCSS(node.fills[0]);
+        if (style)
+            styles += `color: ${style}; `;
     }
     return styles;
 }
@@ -250,7 +259,7 @@ function convertPaintToCSS(paint: Paint): string {
         return `rgba(${Math.round(color.r * 255)}, ${Math.round(color.g * 255)}, ${Math.round(color.b * 255)}, ${paint.opacity !== undefined ? paint.opacity : color.a})`;
     }
     // Handle other paint types (GRADIENT, IMAGE, etc.) if necessary
-    return 'transparent';
+    return '';
 }
 
 

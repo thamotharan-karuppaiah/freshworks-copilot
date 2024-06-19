@@ -34,7 +34,12 @@ const ChatInterface: React.FC = () => {
     let { fileInfo, nodeResponse, nodeImages } = response;
     if (nodeResponse) {
       addMessage({
-        sender: Sender.Bot, text: '', figmaResponse: response, imgPath: nodeImages.images?.[fileInfo.nodeID.replace('-', ':')], presentationonly: true, isImage: true, hidden: true
+        sender: Sender.Bot, text: '',
+        figmaResponse: response,
+        imgPath: nodeImages.images?.[fileInfo.nodeID.replace('-', ':')],
+        presentationonly: true,
+        isImage: true,
+        hidden: true
       });
     }
   }
@@ -149,7 +154,7 @@ const ChatInterface: React.FC = () => {
                   }`}
               >
                 {message.isImage ?
-                  <FigmaNodeViewer fileResponse={message.figmaResponse.nodeResponse} image={message.imgPath}></FigmaNodeViewer>
+                  <FigmaNodeViewer fileResponse={message.figmaResponse.nodeResponse} fileImageFillsResponse={message.figmaResponse.fileImageFillsResponse} image={message.imgPath}></FigmaNodeViewer>
                   :
                   <LlmResponse data={message.text}></LlmResponse>}
               </div>

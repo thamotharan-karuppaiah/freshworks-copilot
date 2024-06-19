@@ -6,14 +6,14 @@ import { FigspecFrameViewer, FigspecFileViewer } from "@figspec/react";
 import { executeAnyCommand } from '../services/vsCodeService';
 import { VsCommands } from '../constants';
 
-const FigmaNodeViewer: React.FC<{ fileResponse: figmaJs.FileNodesResponse, image: string }> = ({ fileResponse, image }) => {
+const FigmaNodeViewer: React.FC<{ fileResponse: figmaJs.FileNodesResponse, image: string, fileImageFillsResponse: figmaJs.FileImageFillsResponse }> = ({ fileResponse, image, fileImageFillsResponse }) => {
 
 	const onNodeSelect = (e: any) => {
 		debugger
 	}
 
 	const Inppect = () => {
-		executeAnyCommand(VsCommands.figmaInspect, { fileResponse: fileResponse, image: image });
+		executeAnyCommand(VsCommands.figmaInspect, { fileResponse: fileResponse, image: image, fileImageFillsResponse });
 	}
 
 	return (<div className="mt-2">
