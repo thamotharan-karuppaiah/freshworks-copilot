@@ -27,7 +27,7 @@ const ChatInterface: React.FC = () => {
 
   useEffect(() => {
     if (!vsCodeMessage) return;
-    vsCodeMessage.command === 'figmaNodeSelected' && setLastKnownFigmaNode(vsCodeMessage.selectedNode);
+    vsCodeMessage.command === 'figmaNodeSelected' && setLastKnownFigmaNode(vsCodeMessage);
   }, [vsCodeMessage]);
 
   const processIfPromptIsFigmaURL = async (inputText: string) => {
@@ -63,7 +63,7 @@ const ChatInterface: React.FC = () => {
       }
       else {
         if (lastKnownFigmaNode) {
-          hiddenPrompt = `HIDDEN:FIGMA NODE : ${createComponent(lastKnownFigmaNode as any, {}, {}, {})}`;
+          hiddenPrompt = `HIDDEN:FIGMA NODE : ${createComponent(lastKnownFigmaNode.selectedNode as any, lastKnownFigmaNode.fileImageFillsResponse?.meta?.images)}`;
           let userHidePrompt = { sender: Sender.User, text: hiddenPrompt, hidden: true };
           addMessage(userHidePrompt);
           history = [...history, userHidePrompt];
@@ -193,7 +193,7 @@ const ChatInterface: React.FC = () => {
           </button>
         ))}
       </div>
-      {lastKnownFigmaNode
+      {lastKnownFigmaNode && lastKnownFigmaNode.selectedNode
         ? (
           <div className="p-4 bg-gray-800 flex items-center">
             <input
@@ -201,9 +201,9 @@ const ChatInterface: React.FC = () => {
               ref={inputTextRef}
               type="text"
               className="flex-1 p-2 rounded-lg bg-[#f5deb3] text-black"
-              value={'You selected the node : ' + lastKnownFigmaNode.name}
+              value={'You selected the node : ' + lastKnownFigmaNode.selectedNode.name}
             />
-            <button onClick={() => { sendMessage(`Submitted the node: ${lastKnownFigmaNode.name}`); setLastKnownFigmaNode(null) }} className="ml-2 p-2 bg-blue-500 text-white rounded-lg flex items-center justify-center">Submit</button>
+            <button onClick={() => { sendMessage(`Submitted the node: ${lastKnownFigmaNode.selectedNode.name}`); setLastKnownFigmaNode(null) }} className="ml-2 p-2 bg-blue-500 text-white rounded-lg flex items-center justify-center">Submit</button>
             <button onClick={() => setLastKnownFigmaNode(null)} className="ml-2 p-2 bg-gray-500 text-white rounded-lg flex items-center justify-center">Close</button>
           </div>
         ) : (

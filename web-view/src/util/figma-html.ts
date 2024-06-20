@@ -191,6 +191,6 @@ function convertColorToCSS(color: { r: number; g: number; b: number; a: number }
   return `rgba(${Math.round(color.r * 255)}, ${Math.round(color.g * 255)}, ${Math.round(color.b * 255)}, ${color.a})`;
 }
 
-export function createComponent(node: Node, imageMap: any, a: any, b: any): string {
+export function createComponent(node: Node, imageMap: any): string {
   return convertNodeToHTML({ ...node, rootNode: node } as any, imageMap);
 }

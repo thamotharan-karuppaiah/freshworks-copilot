@@ -11,7 +11,7 @@ import { html as beautifyHtml } from 'js-beautify';
 const FigmaInspector: React.FC = () => {
 	const [fileResponse, setFileResponse] = useState<any>();
 	const [image, setImage] = useState<any>();
-	const [fileImages, setFillImages] = useState<any>([]);
+	const [fileImageFillsResponse, SetFileImageFillsResponse] = useState<any>([]);
 	const [htmlText, setHtmlText] = useState('');
 	const [formattedHtml, setFormattedHtml] = useState('');
 	const [scale, setScale] = useState(1);
@@ -22,7 +22,7 @@ const FigmaInspector: React.FC = () => {
 			if (event.data.command === 'figmaDataRequest') {
 				setFileResponse(event.data.fileResponse);
 				setImage(event.data.image);
-				setFillImages(event.data.fileImageFillsResponse);
+				SetFileImageFillsResponse(event.data.fileImageFillsResponse);
 			}
 		};
 		window.addEventListener('message', handleMessage);
@@ -38,10 +38,10 @@ const FigmaInspector: React.FC = () => {
 	}, [editorRef.current])
 
 	const onNodeSelect = (e: any) => {
-		const rawHtml = createComponent(e.detail.node, fileImages?.meta?.images, {}, {});
+		const rawHtml = createComponent(e.detail.node, fileImageFillsResponse?.meta?.images);
 		setHtmlText(rawHtml);
 		setFormattedHtml(beautifyHtml(rawHtml, { indent_size: 2, space_in_empty_paren: true }));
-		sendNodeSelectedEvent(e.detail.node);
+		sendNodeSelectedEvent(e.detail.node,fileImageFillsResponse);
 	};
 
 	const handleZoomIn = () => {

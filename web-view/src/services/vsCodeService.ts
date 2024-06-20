@@ -26,8 +26,8 @@ export function sendFigmaDataRequest(id) {
 	vsCode.postMessage({ command: 'figmaDataRequest', id });
 }
 
-export function sendNodeSelectedEvent(selectedNode) {
-	vsCode.postMessage({ command: 'figmaNodeSelected', selectedNode });
+export function sendNodeSelectedEvent(selectedNode, fileImageFillsResponse) {
+	vsCode.postMessage({ command: 'figmaNodeSelected', selectedNode, fileImageFillsResponse });
 }
 
 
