@@ -8,7 +8,7 @@ export function activate(context: vscode.ExtensionContext) {
 	const provider = new FigmaChatViewProvider(context.extensionUri);
 
 	context.subscriptions.push(
-		vscode.window.registerWebviewViewProvider(FigmaChatViewProvider.viewType, provider));
+		vscode.window.registerWebviewViewProvider(FigmaChatViewProvider.viewType, provider, { webviewOptions: { retainContextWhenHidden: true } }));
 
 	context.subscriptions.push(vscode.commands.registerCommand('fmpilot.getConfiguration', () => {
 		const config = vscode.workspace.getConfiguration('fwCopilot');
@@ -31,7 +31,8 @@ export function activate(context: vscode.ExtensionContext) {
 			'Figma Inspector: ' + data.fileResponse.name,
 			vscode.ViewColumn.One,
 			{
-				enableScripts: true
+				enableScripts: true,
+				retainContextWhenHidden: true
 			}
 		);
 		openFigmaInspectorView(panel.webview, context.extensionUri);
