@@ -63,7 +63,7 @@ const ChatInterface: React.FC = () => {
       }
       else {
         if (lastKnownFigmaNode) {
-          hiddenPrompt = `HIDDEN:FIGMA HTML : ${createComponent(lastKnownFigmaNode as any, {}, {}, {})}`;
+          hiddenPrompt = `HIDDEN:FIGMA NODE : ${createComponent(lastKnownFigmaNode as any, {}, {}, {})}`;
           let userHidePrompt = { sender: Sender.User, text: hiddenPrompt, hidden: true };
           addMessage(userHidePrompt);
           history = [...history, userHidePrompt];
@@ -189,7 +189,7 @@ const ChatInterface: React.FC = () => {
             className="m-1 p-2 bg-blue-500 text-white rounded-lg whitespace-nowrap"
             onClick={() => sendMessage(suggestion)}
           >
-            {suggestion}
+            {suggestion + ''}
           </button>
         ))}
       </div>
