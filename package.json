@@ -88,7 +88,7 @@
 				},
 				"fwCopilot.promptResponseType": {
 					"type": "string",
-					"default": "json",
+					"default": "xml",
 					"description": "Prompt Response Type for fwCopilot plugin. Default is json. Possible values are json, xml"
 				}
 			}

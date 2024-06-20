@@ -180,6 +180,7 @@ const ChatInterface: React.FC = () => {
           <div className="p-4 bg-gray-800 flex items-center">
             <input
               disabled={true}
+              ref={inputTextRef}
               type="text"
               className="flex-1 p-2 rounded-lg bg-[#f5deb3]"
               value={'You selected the node : ' + lastKnownFigmaNode.name}
