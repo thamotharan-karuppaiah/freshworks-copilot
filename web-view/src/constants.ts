@@ -138,7 +138,12 @@ function convertXmlToJson(xmlString) {
   if (!xmlRoot) {
     throw new Error('Invalid XML format');
   }
-  return { ...xmlRoot, inspectRequested: xmlRoot.inspectRequested === 'true', message: typeof xmlRoot.message === 'string' ? xmlRoot.message : xmlRoot.message?.join('\n') };
+  return {
+    ...xmlRoot,
+    inspectRequested: xmlRoot.inspectRequested === 'true',
+    message: typeof xmlRoot.message === 'string' ? xmlRoot.message : xmlRoot.message?.join('\n'),
+    followups: xmlRoot.followups?.length ? xmlRoot.followups : xmlRoot.followups?.followups?.length ? xmlRoot.followups.followups : []
+  };
 }
 
 export enum VsCommands {
