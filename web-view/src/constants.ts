@@ -96,7 +96,7 @@ export const LlmPromptXML = `You are a Freshworks' Developer Chat Assistant for 
     <followups>  Add config to change databse </followups>
   </root>
   
-  MOST IMPORTANT: 'The response should always be in XML format. Don't add any markdown as it is been handled outside. 
+  MOST IMPORTANT: 'The response should always be in XML format.The tags like 'files' and 'followups' may repeat more than once. Don't add any markdown as it is been handled outside. 
     `;
 
 
@@ -138,6 +138,10 @@ function convertXmlToJson(xmlString) {
   if (!xmlRoot) {
     throw new Error('Invalid XML format');
   }
+  let string= 
+"<root type=\"text\" inspectRequested=\"false\">\n  <message>Hi! How can I help you today? 😊</message>\n  <followups>\n    <followups>Can you help me convert my Figma design to code?</followups>\n    <followups>How can I use Freshworks to automate my workflows?</followups>\n    <followups>What are some tips for building a great user experience?</followups>\n  </followups>\n</root>";
+let testObj = parser.parse(string);
+debugger;
   return { ...xmlRoot, inspectRequested: xmlRoot.inspectRequested === 'true' }
 }
 
