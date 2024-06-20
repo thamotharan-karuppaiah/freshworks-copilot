@@ -19,12 +19,19 @@ export const initClient = async () => {
 	return client;
 }
 
-export const getCohereAiResponse = async (history: Message[], prompt) => {
+export const getCohereAiResponse = async (history: Message[], prompt, processingCallback: (streamPart: string) => void) => {
 	client = client ? client : await initClient();
-	let response = await client.chat({
+	let response = await client.chatStream({
 		message: prompt,
 		chatHistory: [{ role: roleMap.system as any, message: LlmPrompt() }, ...history.map(c => ({ role: roleMap[c.sender] as any, message: c.text }))]
 	});
-	const text = response.text;
+	let parts = [];
+	for await (const item of response) {
+		if (item.eventType === "text-generation") {
+			processingCallback(item.text);
+			parts.push(item.text);
+		}
+	};
+	const text = parts.join('');
 	return processMessage(text);
 };

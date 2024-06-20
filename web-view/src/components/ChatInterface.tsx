@@ -17,10 +17,11 @@ import LoadingText from './LoadingText';
 import { createComponent } from '../util/figma-html';
 
 const ChatInterface: React.FC = () => {
-  const { messages, addMessage, clearMessages, lastKnownFigmaNode, setLastKnownFigmaNode }: ChatStore = useChatStore();
+  const { messages, addMessage, clearMessages, lastKnownFigmaNode, setLastKnownFigmaNode, removeMessage }: ChatStore = useChatStore(); // Added removeMessage
   const vsCodeMessage = useVsCodeMessageStore((state) => state.message);
   const inputTextRef = useRef<HTMLInputElement>();
   const [loading, setLoading] = useState(false);
+  const [streamingText, setStreamingText] = useState('');
   const [model, setModel] = useState('gemini');
   const [followupSuggestions, setfollowupSuggestions] = useState<string[]>([]);
 
@@ -51,7 +52,7 @@ const ChatInterface: React.FC = () => {
 
     inputTextRef.current.value = '';
     setLoading(true);
-
+    setStreamingText('');
     try {
       let history = getHistory();
       let userPrompt = { sender: Sender.User, text: message };
@@ -75,13 +76,17 @@ const ChatInterface: React.FC = () => {
           botResponse = await getChatGptResponse(history, message);
           break;
         case 'gemini':
-          botResponse = await getGeminiResponse(history, message);
+          botResponse = await getGeminiResponse(history, message, (stream) => {
+            setStreamingText((prev) => prev + stream);
+          });
           break;
         case 'copilot':
           botResponse = await getCopilotResponse(history, message);
           break;
         case 'cohereai':
-          botResponse = await getCohereAiResponse(history, message);
+          botResponse = await getCohereAiResponse(history, message, (stream) => {
+            setStreamingText((prev) => prev + stream);
+          });
           break;
         case 'deepai':
           botResponse = await getDeepAiResponse(history, message);
@@ -105,7 +110,12 @@ const ChatInterface: React.FC = () => {
       addMessage(errorMessage);
     } finally {
       setLoading(false);
+      setStreamingText('');
     }
+  };
+
+  const handleDeleteMessage = (index) => {
+    removeMessage(index); // Assuming removeMessage takes the index of the message to remove
   };
 
   return (
@@ -138,7 +148,7 @@ const ChatInterface: React.FC = () => {
       <div className="flex flex-col-reverse overflow-auto flex-1 p-4">
         {loading && (
           <div className="self-start bg-gray-300 text-gray-800 p-2 rounded-lg m-2 animate-pulse">
-            <LoadingText startTime={1}></LoadingText>
+            <LoadingText startTime={1}></LoadingText> {streamingText && ` (Received: ${streamingText.length} characters)`}
           </div>
         )}
         <div className="flex flex-col">
@@ -148,11 +158,19 @@ const ChatInterface: React.FC = () => {
             messages.filter(c => !c.hidden || c.presentationonly).map((message, index) => (
               <div
                 key={message.key}
-                className={`chat-message max-w-full p-2 rounded-lg m-2 flex flex-col justify-between transform transition-all duration-500 ${message.sender === 'user'
+                className={`chat-message relative max-w-full p-2 rounded-lg m-2 flex flex-col justify-between transform transition-all duration-500 ${message.sender === 'user'
                   ? 'bg-blue-500 text-white self-end fadeIn'
                   : 'bg-gray-300 text-gray-800 self-start fadeIn'
                   }`}
               >
+                <div className='delete-chat-container'>
+                  <a
+                    className="delete-chat cursor-pointer"
+                    onClick={() => handleDeleteMessage(index)}
+                  >
+                    &#x2715;
+                  </a>
+                </div>
                 {message.isImage ?
                   <FigmaNodeViewer fileResponse={message.figmaResponse.nodeResponse} fileImageFillsResponse={message.figmaResponse.fileImageFillsResponse} image={message.imgPath}></FigmaNodeViewer>
                   :
@@ -164,8 +182,8 @@ const ChatInterface: React.FC = () => {
       </div>
 
       {/* Follow-up suggestions section */}
-      <div className={`p-4 text-xs bg-gray-800 flex flex-nowrap slide-up overflow-x-auto ${followupSuggestions.length > 0 ? '' : `hidden`}`}>
-        {followupSuggestions.map((suggestion, index) => (
+      <div className={`p-4 text-xs bg-gray-800 flex flex-nowrap slide-up overflow-x-auto ${followupSuggestions?.length > 0 ? '' : `hidden`}`}>
+        {followupSuggestions?.map((suggestion, index) => (
           <button
             key={index}
             className="m-1 p-2 bg-blue-500 text-white rounded-lg whitespace-nowrap"
@@ -182,7 +200,7 @@ const ChatInterface: React.FC = () => {
               disabled={true}
               ref={inputTextRef}
               type="text"
-              className="flex-1 p-2 rounded-lg bg-[#f5deb3]"
+              className="flex-1 p-2 rounded-lg bg-[#f5deb3] text-black"
               value={'You selected the node : ' + lastKnownFigmaNode.name}
             />
             <button onClick={() => { sendMessage(`Submitted the node: ${lastKnownFigmaNode.name}`); setLastKnownFigmaNode(null) }} className="ml-2 p-2 bg-blue-500 text-white rounded-lg flex items-center justify-center">Submit</button>
@@ -193,7 +211,7 @@ const ChatInterface: React.FC = () => {
             <input
               type="text"
               ref={inputTextRef}
-              className="flex-1 p-2 rounded-lg "
+              className="flex-1 p-2 rounded-lg text-black"
               placeholder="Type a message..."
               onChange={(e) => inputTextRef.current.value = e.target.value}
               onKeyDown={(e) => {
@@ -209,8 +227,6 @@ const ChatInterface: React.FC = () => {
           </div>
         )
       }
-
-
     </div>
   );
 };

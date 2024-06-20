@@ -39,3 +39,28 @@ code {
 .slide-up {
   animation: slideUp 0.4s ease-out;
 }
+
+.chat-message .delete-chat-container {
+  position: absolute;
+  left: -24px;
+  top: -1px;
+  display: none;
+  padding: 2px;
+  height: 100%;
+}
+
+.chat-message .delete-chat {
+  background: gray;
+  border-radius: 50%;
+  opacity: 0.5;
+  display: flex;
+  width: 20px;
+  height: 20px;
+  color: white;
+  align-items: center;
+  justify-content: center;
+}
+
+.chat-message:hover .delete-chat-container {
+  display: block;
+}

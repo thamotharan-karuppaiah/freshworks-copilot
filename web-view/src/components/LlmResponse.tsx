@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { sendCreateFileRequest, sendCopyCliboardRequest, executeAnyCommand, sendCreateFilesRequest } from '../services/vsCodeService';
 import { VsCommands, parseMessage } from '../constants';
 import useChatStore, { Message } from '../store/chat-message-store';
@@ -28,7 +28,7 @@ const LlmResponse: React.FC<Props> = ({ data }) => {
 	let { messages } = useChatStore();
 	let [availableFigmaDesigns, setAvailableFigmaDesigns] = useState<Message[]>([]);
 	let message: Data = null;
-	message = parseMessage(data);
+	message = useMemo(() => { return parseMessage(data) }, [data]);
 
 	const { type, message: responseMessage, inspectRequested, files } = message;
 

@@ -2,10 +2,10 @@
 import { XMLParser } from "fast-xml-parser";
 import { getConfiguration } from './services/vsCodeService';
 
-let promptResponseType = 'json';
+let promptResponseType = 'xml';
 
 (async function initLlmProptType() {
-  const responseType = await getConfiguration('promptResponseType').catch(() => 'json');
+  const responseType = await getConfiguration('promptResponseType').catch(() => 'xml');
   if (responseType === 'xml' || responseType === 'json') {
     promptResponseType = responseType;
   }
@@ -62,6 +62,7 @@ export const LlmPromptXML = `You are a Developer Assistant for Code generation a
       Dont's: 
       - Don't ask for the url if already provided, or hidden figma context already provided.
       - Don't generate code if figma node details are not provided in the hidden context. intead ask to inpsect.
+      - Don't provide the pure html code, unless it is explicitly asked from the user. Intead ask for the choice of conversion. 
   3. Hidden context: Hidden contexts are something user is not providing, it is given by tools to LLM to add dynamic details.
       1. HIDDEN:FIGMA HTML :<html>, This is pattern. When found, Use this to respond to user request appropriately. This will be set automatically by the tool when a node selected by user.
   
@@ -121,7 +122,6 @@ export const parseMessage = (message: string) => {
     }
   }
   catch (ex) {
-    console.log(ex);
     return { type: 'text', message: message, inspectRequested: false };
   }
 }

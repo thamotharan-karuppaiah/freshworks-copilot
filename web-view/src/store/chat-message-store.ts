@@ -28,8 +28,8 @@ export interface ChatStore {
 	// hiddenMessages: Message[];
 	// addHiddenMessage: (message: Message) => void;
 	addMessage: (message: Message) => void;
+	removeMessage: (message: Message) => void;
 	clearMessages: () => void;
-	deleteMessage: (index: number) => void;
 	lastKnownFigmaNode: any;
 	setLastKnownFigmaNode: (node: any) => void;
 }
@@ -44,11 +44,11 @@ const useChatStore = create<ChatStore>(
 			// addHiddenMessage: (message) => set((state) => ({ hiddenMessages: message ? [message] : [] })),
 			clearMessages: () => {
 				resetChat(); // reset gemini chat
-				return set({ messages: [], hiddenMessages: [], lastKnownFigmaNode: null})
+				return set({ messages: [], hiddenMessages: [], lastKnownFigmaNode: null })
 			},
-			deleteMessage: (index) =>
+			removeMessage: (index) =>
 				set((state) => ({
-					messages: state.messages.filter((_, i) => i !== index),
+					messages: state.messages.filter((_, i) => i < index),
 				})),
 			lastKnownFigmaNode: null,
 			setLastKnownFigmaNode: (node) => set({ lastKnownFigmaNode: node }),
