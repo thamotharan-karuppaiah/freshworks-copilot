@@ -46,10 +46,13 @@ const useChatStore = create<ChatStore>(
 				resetChat(); // reset gemini chat
 				return set({ messages: [], hiddenMessages: [], lastKnownFigmaNode: null })
 			},
-			removeMessage: (index) =>
-				set((state) => ({
-					messages: state.messages.filter((_, i) => i < index),
-				})),
+			removeMessage: (message) =>
+				set((state) => {
+					const index = state.messages.findIndex((m) => m.key === message.key);
+					if (index === -1) return;
+					state.messages.splice(index, 1);
+					return { messages: [...state.messages] };
+				}),
 			lastKnownFigmaNode: null,
 			setLastKnownFigmaNode: (node) => set({ lastKnownFigmaNode: node }),
 		}),

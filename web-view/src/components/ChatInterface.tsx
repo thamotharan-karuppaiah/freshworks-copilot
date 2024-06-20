@@ -114,8 +114,8 @@ const ChatInterface: React.FC = () => {
     }
   };
 
-  const handleDeleteMessage = (index) => {
-    removeMessage(index); // Assuming removeMessage takes the index of the message to remove
+  const handleDeleteMessage = (message) => {
+    removeMessage(message); // Assuming removeMessage takes the index of the message to remove
   };
 
   return (
@@ -166,7 +166,7 @@ const ChatInterface: React.FC = () => {
                 <div className='delete-chat-container'>
                   <a
                     className="delete-chat cursor-pointer"
-                    onClick={() => handleDeleteMessage(index)}
+                    onClick={() => handleDeleteMessage(message)}
                   >
                     &#x2715;
                   </a>
