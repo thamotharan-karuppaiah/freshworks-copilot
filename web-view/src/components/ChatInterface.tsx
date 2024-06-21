@@ -15,6 +15,7 @@ import EmptyState from './EmptyState';
 import useVsCodeMessageStore from '../store/vsCodeMessageStore';
 import LoadingText from './LoadingText';
 import { createComponent } from '../util/figma-html';
+import { getClaudeResponse } from '../services/claudeService';
 
 const ChatInterface: React.FC = () => {
   const { messages, addMessage, clearMessages, lastKnownFigmaNode, setLastKnownFigmaNode, removeMessage }: ChatStore = useChatStore(); // Added removeMessage
@@ -88,6 +89,11 @@ const ChatInterface: React.FC = () => {
             setStreamingText((prev) => prev + stream);
           });
           break;
+        case 'claude':
+          botResponse = await getClaudeResponse(history, message, (stream) => {
+            setStreamingText((prev) => prev + stream);
+          });
+          break;
         case 'deepai':
           botResponse = await getDeepAiResponse(history, message);
           break;
@@ -134,6 +140,7 @@ const ChatInterface: React.FC = () => {
             <option value="copilot">Copilot</option>
             <option value="chatgpt">ChatGPT</option>
             <option value="cohereai">CohereAi</option>
+            <option style={({ display: 'none' })} value="claude">Claude</option>
             <option value="deepai">DeepAi</option>
           </select>
           <button

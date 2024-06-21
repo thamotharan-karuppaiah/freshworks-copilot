@@ -66,7 +66,7 @@ export async function executeAnyCommand(vsCommand: VsCommands, ...args: any[]) {
 	});
 }
 
-export async function getConfiguration(key): Promise<string> {
+export async function getConfiguration(key, skipOpeningSettings?): Promise<string> {
 	let API_KEY = '';
 	if (window.acquireVsCodeApi) {
 		const configuration = await executeAnyCommand(VsCommands.getConfiguration) as any;
@@ -75,7 +75,7 @@ export async function getConfiguration(key): Promise<string> {
 	else {
 		API_KEY = localStorage.getItem(key);
 	}
-	if (!API_KEY) {
+	if (!API_KEY && !skipOpeningSettings) {
 		openConfiguration(key);
 		throw new Error('API key not found. Configure it with vscode editor settings.');
 	}
