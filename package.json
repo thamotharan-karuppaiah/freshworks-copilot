@@ -81,6 +81,16 @@
 					"default": "",
 					"description": "Coherai API Key for fwCopilot plugin"
 				},
+				"fwCopilot.claudeApiKey": {
+					"type": "string",
+					"default": "",
+					"description": "Claude API Key for fwCopilot plugin"
+				},
+				"fwCopilot.claudeModel": {
+					"type": "string",
+					"default": "",
+					"description": "claudeModel to be used with, default: claude-3-opus-20240229"
+				},
 				"fwCopilot.deepaiApiKey": {
 					"type": "string",
 					"default": "",
