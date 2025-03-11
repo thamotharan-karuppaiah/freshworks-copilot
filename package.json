@@ -3,7 +3,7 @@
 	"displayName": "Freshworks Copilot for Developer",
 	"description": "Freshworks Copilot helps you generate code, design ideas and chat with your AI assistant.",
 	"version": "0.0.1",
-	"publisher": "freshworks.marketter",
+	"publisher": "freshworks-marketter",
 	"private": true,
 	"license": "UNLICENSED",
 	"repository": {
@@ -110,7 +110,7 @@
 		"compile-web-view": "cd web-view && npm run build",
 		"lint": "eslint \"src/**/*.ts\"",
 		"watch": "tsc -w -p ./",
-		"package": "vsce package"
+		"package": "npx @vscode/vsce package"
 	},
 	"devDependencies": {
 		"@babel/plugin-syntax-jsx": "^7.24.6",
@@ -118,6 +118,7 @@
 		"@types/react-dom": "^18.3.0",
 		"@typescript-eslint/eslint-plugin": "^6.7.0",
 		"@typescript-eslint/parser": "^6.7.0",
+		"@vscode/vsce": "^3.2.2",
 		"css-loader": "^7.1.2",
 		"eslint": "^8.32.0",
 		"mini-css-extract-plugin": "^2.9.0",
@@ -135,6 +136,8 @@
 	},
 	"dependencies": {
 		"@google/generative-ai": "^0.12.0",
+		"@langchain/core": "^0.3.42",
+		"@langchain/google-genai": "^0.1.10",
 		"axios": "^1.7.2",
 		"babel-loader": "^9.1.3",
 		"deepai": "^1.0.23",
