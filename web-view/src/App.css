@@ -36,3 +36,258 @@
     transform: rotate(360deg);
   }
 }
+
+/* Theme Variables */
+:root {
+  /* Light theme (default) */
+  --bg-primary: #ffffff;
+  --bg-secondary: #F9FAFB;
+  --bg-tertiary: #F1F5F9;
+  --bg-accent: #6366F1;
+  --bg-highlight: #gray-100;
+  --bg-code: #F9FAFB;
+
+  --border-primary: #E5E7EB;
+  --border-secondary: #gray-200;
+
+  --text-primary: #111827;
+  --text-secondary: #4B5563;
+  --text-tertiary: #6B7280;
+  --text-accent: #6366F1;
+  --text-inverted: #FFFFFF;
+  
+  --accent-primary: #6366F1; 
+  --accent-secondary: #4F46E5;
+  --accent-hover: #4338CA;
+  --accent-blue: #2563EB;
+  --accent-blue-hover: #1D4ED8;
+  --accent-dark: #4338CA;
+
+  /* Avatar gradients */
+  --avatar-bot-from: #64748B;
+  --avatar-bot-to: #94A3B8;
+  --avatar-bot-border: #CBD5E1;
+  --avatar-user-from: #6366F1;
+  --avatar-user-to: #4F46E5;
+  --avatar-icon-color: #FFFFFF;
+
+  /* Message gradients */
+  --user-message-from: #2563EB; /* Blue */
+  --user-message-to: #1D4ED8; /* Darker blue */
+
+  /* Delete buttons */
+  --delete-user-bg: #4F46E5;
+  --delete-user-text: #FFFFFF;
+  --delete-user-hover-bg: #6366F1;
+  --delete-bot-bg: #64748B;
+  --delete-bot-text: #FFFFFF;
+  --delete-bot-hover-bg: #475569;
+  --delete-bot-border: #94A3B8;
+
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+/* Add theme-light class for explicit light theme styling */
+.theme-light {
+  --bg-primary: #ffffff;
+  --bg-secondary: #F9FAFB;
+  --bg-tertiary: #F1F5F9;
+  --bg-accent: #6366F1;
+  --bg-highlight: #gray-100;
+  --bg-code: #F9FAFB;
+
+  --border-primary: #E5E7EB;
+  --border-secondary: #gray-200;
+
+  --text-primary: #111827;
+  --text-secondary: #4B5563;
+  --text-tertiary: #6B7280;
+  --text-accent: #6366F1;
+  --text-inverted: #FFFFFF;
+  
+  --accent-primary: #6366F1; 
+  --accent-secondary: #4F46E5;
+  --accent-hover: #4338CA;
+  --accent-blue: #2563EB;
+  --accent-blue-hover: #1D4ED8;
+  --accent-dark: #4338CA;
+
+  /* Avatar gradients */
+  --avatar-bot-from: #64748B;
+  --avatar-bot-to: #94A3B8;
+  --avatar-bot-border: #CBD5E1;
+  --avatar-user-from: #6366F1;
+  --avatar-user-to: #4F46E5;
+  --avatar-icon-color: #FFFFFF;
+
+  /* Message gradients */
+  --user-message-from: #2563EB; /* Blue */
+  --user-message-to: #1D4ED8; /* Darker blue */
+
+  /* Delete buttons */
+  --delete-user-bg: #4F46E5;
+  --delete-user-text: #FFFFFF;
+  --delete-user-hover-bg: #6366F1;
+  --delete-bot-bg: #64748B;
+  --delete-bot-text: #FFFFFF;
+  --delete-bot-hover-bg: #475569;
+  --delete-bot-border: #94A3B8;
+
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+/* Default theme that uses VSCode variables */
+.theme-default {
+  /* Background colors */
+  --bg-primary: var(--vscode-editor-background, #1e1e1e);
+  --bg-secondary: var(--vscode-sideBar-background, #252526); 
+  --bg-tertiary: var(--vscode-dropdown-background, #3c3c3c);
+  --bg-accent: var(--vscode-button-background, #0e639c);
+  --bg-highlight: var(--vscode-list-highlightForeground, #18a3ff);
+  --bg-code: var(--vscode-textCodeBlock-background, #0d0d0d);
+
+  /* Border colors */
+  --border-primary: var(--vscode-widget-border, #454545);
+  --border-secondary: var(--vscode-input-border, #3c3c3c);
+
+  /* Text colors */
+  --text-primary: var(--vscode-editor-foreground, #d4d4d4);
+  --text-secondary: var(--vscode-descriptionForeground, #cccccc);
+  --text-tertiary: var(--vscode-disabledForeground, #a0a0a0);
+  --text-accent: var(--vscode-textLink-foreground, #3794ff);
+  --text-inverted: var(--vscode-button-foreground, #ffffff);
+  
+  /* Accent colors */
+  --accent-primary: var(--vscode-button-background, #0e639c); 
+  --accent-secondary: var(--vscode-button-hoverBackground, #1177bb);
+  --accent-hover: var(--vscode-button-hoverBackground, #1177bb);
+  --accent-blue: var(--vscode-textLink-activeForeground, #3794ff);
+  --accent-blue-hover: var(--vscode-textLink-activeForeground, #3794ff);
+  --accent-dark: var(--vscode-button-background, #0e639c);
+
+  /* Avatar gradients */
+  --avatar-bot-from: var(--vscode-activityBar-background, #333333);
+  --avatar-bot-to: var(--vscode-activityBar-foreground, #ffffff);
+  --avatar-bot-border: var(--vscode-activityBar-border, #555555);
+  --avatar-user-from: var(--vscode-button-background, #0e639c);
+  --avatar-user-to: var(--vscode-button-hoverBackground, #1177bb);
+  --avatar-icon-color: var(--vscode-button-foreground, #ffffff);
+
+  /* Message gradients - using solid colors from VSCode variables */
+  --user-message-from: var(--vscode-button-background, #0e639c);
+  --user-message-to: var(--vscode-button-background, #0e639c);
+
+  /* Delete buttons */
+  --delete-user-bg: var(--vscode-button-background, #0e639c);
+  --delete-user-text: var(--vscode-button-foreground, #ffffff);
+  --delete-user-hover-bg: var(--vscode-button-hoverBackground, #1177bb);
+  --delete-bot-bg: var(--vscode-editorWidget-background, #252526);
+  --delete-bot-text: var(--vscode-editorWidget-foreground, #cccccc);
+  --delete-bot-hover-bg: var(--vscode-inputOption-hoverBackground, #3c3c3c);
+  --delete-bot-border: var(--vscode-widget-border, #454545);
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.25);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.18);
+}
+
+/* Move the dark theme styles after the default theme */
+.theme-dark {
+  --bg-primary: #0A0A0A;
+  --bg-secondary: #18181B; 
+  --bg-tertiary: #27272A;
+  --bg-accent: #4F46E5;
+  --bg-highlight: #3F3F46;
+  --bg-code: #0D0D0D;
+
+  --border-primary: #27272A;
+  --border-secondary: #3F3F46;
+
+  --text-primary: #FFFFFF;
+  --text-secondary: #A1A1AA;
+  --text-tertiary: #71717A;
+  --text-accent: #6366F1;
+  --text-inverted: #FFFFFF;
+  
+  --accent-primary: #6366F1;
+  --accent-secondary: #4F46E5;
+  --accent-hover: #4338CA;
+  --accent-blue: #2563EB;
+  --accent-blue-hover: #1D4ED8;
+  --accent-dark: #4338CA;
+
+  /* Avatar gradients */
+  --avatar-bot-from: #27272A;
+  --avatar-bot-to: #18181B;
+  --avatar-bot-border: #3F3F46;
+  --avatar-user-from: #6366F1;
+  --avatar-user-to: #4F46E5;
+  --avatar-icon-color: #FFFFFF;
+
+  /* Message gradients */
+  --user-message-from: #3F3F46; /* Dark gray */
+  --user-message-to: #27272A; /* Darker gray */
+
+  /* Delete buttons */
+  --delete-user-bg: #4F46E5;
+  --delete-user-text: #FFFFFF;
+  --delete-user-hover-bg: #6366F1;
+  --delete-bot-bg: #27272A;
+  --delete-bot-text: #FFFFFF;
+  --delete-bot-hover-bg: #3F3F46;
+  --delete-bot-border: #3F3F46;
+
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.25);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.18);
+}
+
+/* Utility classes */
+.bg-primary { background-color: var(--bg-primary); }
+.bg-secondary { background-color: var(--bg-secondary); }
+.bg-tertiary { background-color: var(--bg-tertiary); }
+.bg-accent { background-color: var(--bg-accent); }
+.bg-highlight { background-color: var(--bg-highlight); }
+.bg-code { background-color: var(--bg-code); }
+
+.border-primary { border-color: var(--border-primary); }
+.border-secondary { border-color: var(--border-secondary); }
+.border-avatar-bot { border-color: var(--avatar-bot-border); }
+
+.text-primary { color: var(--text-primary); }
+.text-secondary { color: var(--text-secondary); }
+.text-tertiary { color: var(--text-tertiary); }
+.text-accent { color: var(--text-accent); }
+.text-inverted { color: var(--text-inverted); }
+
+.accent-primary { background-color: var(--accent-primary); color: var(--text-inverted); }
+.accent-secondary { background-color: var(--accent-secondary); color: var(--text-inverted); }
+.accent-hover { background-color: var(--accent-hover); color: var(--text-inverted); }
+.accent-blue { background-color: var(--accent-blue); color: var(--text-inverted); }
+.accent-blue-hover { background-color: var(--accent-blue-hover); color: var(--text-inverted); }
+
+.avatar-bot-gradient { 
+  background-color: var(--avatar-bot-from); 
+  border-color: var(--avatar-bot-border);
+}
+.avatar-user-gradient { background-image: linear-gradient(to bottom right, var(--avatar-user-from), var(--avatar-user-to)); }
+.avatar-icon { color: var(--avatar-icon-color); }
+
+.user-message-gradient { 
+  background-color: var(--bg-secondary); 
+  color: var(--text-primary) !important; 
+}
+
+.delete-user-button { background-color: var(--delete-user-bg); color: var(--delete-user-text); }
+.delete-user-button:hover { background-color: var(--delete-user-hover-bg); }
+.delete-bot-button { background-color: var(--delete-bot-bg); color: var(--delete-bot-text); border-color: var(--delete-bot-border); }
+.delete-bot-button:hover { background-color: var(--delete-bot-hover-bg); }
+
+.hover\:bg-accent:hover { background-color: var(--bg-accent); }
+.hover\:bg-tertiary:hover { background-color: var(--bg-tertiary); }
+.hover\:bg-highlight:hover { background-color: var(--bg-highlight); }
+.hover\:accent-hover:hover { background-color: var(--accent-hover); }
+.hover\:accent-blue-hover:hover { background-color: var(--accent-blue-hover); }
+.hover\:text-primary:hover { color: var(--text-primary); }
+.hover\:text-accent:hover { color: var(--text-accent); }

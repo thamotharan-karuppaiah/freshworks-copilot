@@ -222,4 +222,14 @@ export const getHistory = () => {
 	return currentChat?.messages || [];
 };
 
+export const clearAllStorage = () => {
+	localStorage.clear(); // Clear all localStorage data
+	const newChat = createChat();
+	useChatStore.setState({ // Reset store to initial state
+		chats: [newChat],
+		currentChatId: newChat.id,
+		lastKnownFigmaNode: null
+	});
+};
+
 export default useChatStore;

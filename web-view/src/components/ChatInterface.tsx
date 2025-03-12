@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import 'tailwindcss/tailwind.css';
-import useChatStore, { ChatStore, getHistory } from '../store/chat-message-store';
+import useChatStore, { ChatStore, getHistory, clearAllStorage } from '../store/chat-message-store';
 import { getFigmaResponse } from '../services/figmaApiService';
 import { checktextHasFigmaUrl } from '../util/figma';
 import FigmaNodeViewer from './FigmaNode';
@@ -10,7 +10,7 @@ import EmptyState from './EmptyState';
 import useVsCodeMessageStore from '../store/vsCodeMessageStore';
 import LoadingText from './LoadingText';
 import { getLlmResponse } from '../services/cloudverseService';
-import { LucideSend, LucideTrash2, LucideX, LucidePlus, LucideMessageSquare, LucideEdit2, LucideSun, LucideMoon } from 'lucide-react';
+import { LucideSend, LucideTrash2, LucideX, LucidePlus, LucideMessageSquare, LucideEdit2, LucideSun, LucideMoon, LucideDatabase, LucideSquare, LucideUser, LucideBot, LucideMoreVertical } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
 import useThemeStore from '../store/theme-store';
 
@@ -65,12 +65,26 @@ const ChatInterface: React.FC = () => {
   const chatListButtonRef = useRef<HTMLButtonElement>(null);
   const [isCreatingChat, setIsCreatingChat] = useState(false);
   const [currentMessageKey, setCurrentMessageKey] = useState<string | null>(null);
-  const { theme, toggleTheme } = useThemeStore();
+  const { theme, toggleTheme, setTheme } = useThemeStore();
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const settingsMenuRef = useRef<HTMLDivElement>(null);
+  const settingsButtonRef = useRef<HTMLButtonElement>(null);
 
   const currentChat = chats.find(chat => chat.id === (currentChatId || chats[0].id));
   const messages = currentChat?.messages || [];
   const visibleMessages = messages.filter(msg => !msg.hidden || msg.presentationonly);
   const hasMessages = visibleMessages.length > 0;
+
+  // Make sendMessage available globally for LlmResponse to use
+  React.useEffect(() => {
+    // Expose the sendMessage function to the window object
+    (window as any).sendMessage = sendMessage;
+    
+    // Clean up when component unmounts
+    return () => {
+      delete (window as any).sendMessage;
+    };
+  }, []);
 
   const formatDate = (timestamp: number) => {
     const date = new Date(timestamp);
@@ -99,6 +113,28 @@ const ChatInterface: React.FC = () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [isChatListOpen]);
+
+  // Add click outside handler for settings menu
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if ((isSettingsOpen && 
+          settingsMenuRef.current && 
+          !settingsMenuRef.current.contains(event.target as Node) &&
+          !settingsButtonRef.current?.contains(event.target as Node)) ||
+          (isChatListOpen && 
+          chatListRef.current && 
+          !chatListRef.current.contains(event.target as Node) &&
+          !chatListButtonRef.current?.contains(event.target as Node))) {
+        setIsSettingsOpen(false);
+        setIsChatListOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isSettingsOpen, isChatListOpen]);
 
   const processIfPromptIsFigmaURL = async (inputText: string) => {
     let response = await getFigmaResponse(inputText, (message) => addMessage({ sender: Sender.Bot, text: message, presentationonly: true }));
@@ -197,27 +233,26 @@ const ChatInterface: React.FC = () => {
     return theme === 'dark' ? darkColor : lightColor;
   };
 
+  const handleClearAllStorage = () => {
+    if (window.confirm('Are you sure you want to clear all storage? This will remove all chat history and cannot be undone.')) {
+      clearAllStorage();
+      window.location.reload(); // Reload to refresh the UI state
+    }
+  };
+
   const InputArea = () => (
     <div className="px-4 py-2">
       <div>
         {lastKnownFigmaNode && lastKnownFigmaNode.selectedNode ? (
           <div className="flex flex-col gap-2">
-            <div className={`flex items-center gap-2 px-3 py-1.5 rounded border ${
-              theme === 'dark'
-                ? 'bg-[#18181B] text-gray-100 border-[#27272A]'
-                : 'bg-gray-50 text-gray-900 border-gray-200'
-            }`}>
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded border border-primary bg-secondary text-primary">
               <div className="flex-1 flex items-center gap-2 text-sm">
-                <span className={theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}>Selected node:</span>
+                <span className="text-secondary">Selected node:</span>
                 <span className="font-medium">{lastKnownFigmaNode.selectedNode.name}</span>
               </div>
               <button
                 onClick={() => setLastKnownFigmaNode(null)}
-                className={`p-1 rounded transition-colors ${
-                  theme === 'dark'
-                    ? 'hover:bg-[#27272A] text-gray-400 hover:text-gray-200'
-                    : 'hover:bg-gray-100 text-gray-500 hover:text-gray-700'
-                }`}
+                className="p-1 rounded transition-colors hover:bg-tertiary text-secondary hover:text-primary"
                 title="Clear selected node"
               >
                 <LucideX size={14} />
@@ -227,11 +262,7 @@ const ChatInterface: React.FC = () => {
               <textarea
                 ref={inputTextRef}
                 rows={1}
-                className={`flex-1 px-3 py-2 rounded text-sm focus:outline-none resize-none min-h-[48px] max-h-[120px] overflow-y-auto ${
-                  theme === 'dark'
-                    ? 'bg-[#18181B] text-gray-100 border-[#27272A] focus:border-[#4F46E5] placeholder-gray-500'
-                    : 'bg-gray-50 text-gray-900 border-gray-200 focus:border-[#6366F1] placeholder-gray-400'
-                }`}
+                className="flex-1 px-3 py-2 rounded text-sm focus:outline-none resize-none min-h-[48px] max-h-[120px] overflow-y-auto bg-secondary text-primary border-primary focus:border-accent placeholder-tertiary"
                 placeholder="Type your message about this Figma node..."
                 onInput={handleTextareaInput}
                 onKeyDown={(e) => {
@@ -249,39 +280,32 @@ const ChatInterface: React.FC = () => {
               />
               <button
                 className={`px-3 py-2 rounded text-sm transition-colors flex items-center gap-1.5 h-[48px] ${
-                  loading ? 'bg-[var(--vscode-button-secondaryBackground)] text-[var(--vscode-button-secondaryForeground)] hover:bg-[var(--vscode-button-secondaryHoverBackground)]' : 'bg-[#1268FB] text-white hover:bg-[#0051D6]'
+                  loading ? 'bg-tertiary text-primary' : 'accent-blue text-inverted hover:accent-blue-hover'
                 }`}
                 onClick={() => loading ? handleStopStreaming() : sendMessage()}
               >
                 {loading ? (
                   <>
-                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-                      <rect x="3" y="3" width="10" height="10" rx="1" fill="currentColor"/>
-                    </svg>
-                    <span>Stop generating</span>
+                    <LucideSquare size={16} />
+                    Stop
                   </>
                 ) : (
                   <>
-                    <LucideSend size={14} />
-                    <span>Send</span>
+                    <LucideSend size={16} />
+                    Send
                   </>
                 )}
               </button>
             </div>
           </div>
         ) : (
-          <div className="flex items-center gap-2">
+          <div className="flex items-start gap-2">
             <textarea
               ref={inputTextRef}
               rows={1}
-              className={`flex-1 px-3 py-2 rounded text-sm focus:outline-none resize-none min-h-[48px] max-h-[120px] overflow-y-auto ${
-                theme === 'dark'
-                  ? 'bg-[#18181B] text-gray-100 border-[#27272A] focus:border-[#4F46E5] placeholder-gray-500'
-                  : 'bg-gray-50 text-gray-900 border-gray-200 focus:border-[#6366F1] placeholder-gray-400'
-              }`}
+              className="flex-1 px-3 py-2 rounded text-sm focus:outline-none resize-none min-h-[48px] max-h-[120px] overflow-y-auto bg-secondary text-primary border border-primary focus:border-accent placeholder-tertiary"
               placeholder="Type your message..."
               onInput={handleTextareaInput}
-              onChange={(e) => inputTextRef.current.value = e.target.value}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && !e.shiftKey) {
                   e.preventDefault();
@@ -295,21 +319,19 @@ const ChatInterface: React.FC = () => {
             />
             <button
               className={`px-3 py-2 rounded text-sm transition-colors flex items-center gap-1.5 h-[48px] ${
-                loading ? 'bg-[var(--vscode-button-secondaryBackground)] text-[var(--vscode-button-secondaryForeground)] hover:bg-[var(--vscode-button-secondaryHoverBackground)]' : 'bg-[#1268FB] text-white hover:bg-[#0051D6]'
+                loading ? 'bg-tertiary text-primary' : 'accent-blue text-inverted hover:accent-blue-hover'
               }`}
               onClick={() => loading ? handleStopStreaming() : sendMessage()}
             >
               {loading ? (
                 <>
-                  <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-                    <rect x="3" y="3" width="10" height="10" rx="1" fill="currentColor"/>
-                  </svg>
-                  <span>Stop generating</span>
+                  <LucideSquare size={16} />
+                  Stop
                 </>
               ) : (
                 <>
-                  <LucideSend size={14} />
-                  <span>Send</span>
+                  <LucideSend size={16} />
+                  Send
                 </>
               )}
             </button>
@@ -320,35 +342,21 @@ const ChatInterface: React.FC = () => {
   );
 
   return (
-    <div className={`flex flex-col h-screen relative ${
-      theme === 'dark' ? 'bg-[#0A0A0A]' : 'bg-white'
-    }`}>
+    <div className="flex flex-col h-screen relative bg-primary">
       {/* Header area with explicit background */}
-      <div className={`absolute top-0 left-0 right-0 h-12 ${
-        theme === 'dark' 
-          ? 'bg-[#0A0A0A] border-[#27272A]' 
-          : 'bg-white border-gray-200'
-      } border-b z-10`}>
+      <div className="absolute top-0 left-0 right-0 h-12 bg-primary border-b border-primary z-10">
         {/* Chat list button */}
         <div className="absolute top-2 left-2 z-20 flex items-center gap-2">
           <button
             ref={chatListButtonRef}
-            className={`flex items-center justify-center w-8 h-8 ${
-              theme === 'dark'
-                ? 'hover:bg-[#27272A] text-gray-400 hover:text-gray-200'
-                : 'hover:bg-gray-100 text-gray-600 hover:text-gray-900'
-            } rounded-lg transition-all`}
+            className="flex items-center justify-center w-8 h-8 hover:bg-tertiary text-secondary hover:text-primary rounded-lg transition-all"
             onClick={() => setIsChatListOpen(!isChatListOpen)}
             title="Chat history"
           >
             <LucideMessageSquare size={16} />
           </button>
           <button
-            className={`flex items-center justify-center w-8 h-8 ${
-              theme === 'dark'
-                ? 'hover:bg-[#27272A] text-gray-400 hover:text-gray-200'
-                : 'hover:bg-gray-100 text-gray-600 hover:text-gray-900'
-            } rounded-lg transition-all ${
+            className={`flex items-center justify-center w-8 h-8 hover:bg-tertiary text-secondary hover:text-primary rounded-lg transition-all ${
               isCreatingChat ? 'opacity-50 cursor-not-allowed' : ''
             }`}
             onClick={() => {
@@ -365,29 +373,15 @@ const ChatInterface: React.FC = () => {
           </button>
         </div>
 
-        {/* Theme switcher */}
+        {/* App Title */}
         <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-20">
-          <button
-            className={`flex items-center justify-center w-8 h-8 ${
-              theme === 'dark'
-                ? 'hover:bg-[#27272A] text-gray-400 hover:text-gray-200'
-                : 'hover:bg-gray-100 text-gray-600 hover:text-gray-900'
-            } rounded-lg transition-all`}
-            onClick={toggleTheme}
-            title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`}
-          >
-            {theme === 'dark' ? <LucideSun size={16} /> : <LucideMoon size={16} />}
-          </button>
+          <h1 className="text-sm font-semibold text-primary">Freshworks Copilot</h1>
         </div>
 
         {/* Controls in top-right corner */}
         <div className="absolute top-2 right-2 z-20 flex items-center gap-2">
           <select
-            className={`appearance-none ${
-              theme === 'dark'
-                ? 'bg-[#18181B] text-gray-200 border-[#27272A] hover:bg-[#27272A]'
-                : 'bg-gray-50 text-gray-900 border-gray-200 hover:bg-gray-100'
-            } text-xs px-3 py-1.5 rounded-lg border focus:outline-none focus:border-[#6366F1] cursor-pointer`}
+            className="appearance-none bg-secondary text-primary border-primary hover:bg-tertiary text-xs px-3 py-1.5 rounded-lg border focus:outline-none focus:border-accent cursor-pointer"
             value={model}
             onChange={(e) => setModel(e.target.value)}
           >
@@ -401,17 +395,68 @@ const ChatInterface: React.FC = () => {
               </optgroup>
             ))}
           </select>
-          <button
-            className={`flex items-center justify-center w-8 h-8 ${
-              theme === 'dark'
-                ? 'hover:bg-[#27272A] text-gray-400 hover:text-gray-200'
-                : 'hover:bg-gray-100 text-gray-600 hover:text-gray-900'
-            } rounded-lg transition-all`}
-            onClick={() => { clearMessages(); setLastKnownFigmaNode(null); setfollowupSuggestions([]); }}
-            title="Clear chat history"
-          >
-            <LucideTrash2 size={14} />
-          </button>
+          
+          {/* Settings dropdown button */}
+          <div className="relative">
+            <button
+              ref={settingsButtonRef}
+              className="flex items-center justify-center w-8 h-8 hover:bg-tertiary text-secondary hover:text-primary rounded-lg transition-all"
+              onClick={() => setIsSettingsOpen(!isSettingsOpen)}
+              title="Settings"
+            >
+              <LucideMoreVertical size={16} />
+            </button>
+            
+            {/* Settings dropdown menu */}
+            {isSettingsOpen && (
+              <div 
+                ref={settingsMenuRef}
+                className="absolute top-full right-0 mt-1 w-48 bg-secondary border-primary border rounded-lg shadow-md overflow-hidden z-50"
+              >
+                <div className="p-1">
+                  <div className="text-xs font-medium px-3 py-2 text-tertiary">Theme</div>
+                  <button
+                    className={`w-full flex items-center gap-2 px-3 py-2 text-sm rounded-md text-start hover:bg-tertiary ${theme === 'default' ? 'bg-highlight text-primary' : 'text-secondary'}`}
+                    onClick={() => { setTheme('default'); setIsSettingsOpen(false); }}
+                  >
+                    <LucideSquare size={14} />
+                    <span>Default (VS Code)</span>
+                  </button>
+                  <button
+                    className={`w-full flex items-center gap-2 px-3 py-2 text-sm rounded-md text-start hover:bg-tertiary ${theme === 'light' ? 'bg-highlight text-primary' : 'text-secondary'}`}
+                    onClick={() => { setTheme('light'); setIsSettingsOpen(false); }}
+                  >
+                    <LucideSun size={14} />
+                    <span>Light</span>
+                  </button>
+                  <button
+                    className={`w-full flex items-center gap-2 px-3 py-2 text-sm rounded-md text-start hover:bg-tertiary ${theme === 'dark' ? 'bg-highlight text-primary' : 'text-secondary'}`}
+                    onClick={() => { setTheme('dark'); setIsSettingsOpen(false); }}
+                  >
+                    <LucideMoon size={14} />
+                    <span>Dark</span>
+                  </button>
+                  
+                  <div className="my-1 border-t border-primary"></div>
+                  
+                  <button
+                    className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded-md text-start hover:bg-tertiary text-secondary"
+                    onClick={() => { clearMessages(); setLastKnownFigmaNode(null); setfollowupSuggestions([]); setIsSettingsOpen(false); }}
+                  >
+                    <LucideTrash2 size={14} />
+                    <span>Clear chat history</span>
+                  </button>
+                  <button
+                    className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded-md text-start hover:bg-tertiary text-secondary"
+                    onClick={() => { handleClearAllStorage(); setIsSettingsOpen(false); }}
+                  >
+                    <LucideDatabase size={14} />
+                    <span>Clear all storage data</span>
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
@@ -419,11 +464,7 @@ const ChatInterface: React.FC = () => {
       {isChatListOpen && (
         <div 
           ref={chatListRef}
-          className={`absolute top-12 left-2 z-30 w-64 ${
-            theme === 'dark'
-              ? 'bg-[#18181B] border-[#27272A]'
-              : 'bg-white border-gray-200'
-          } border rounded-xl shadow-lg overflow-hidden`}
+          className="absolute top-12 left-2 z-30 w-64 bg-secondary border-primary border rounded-xl shadow-md overflow-hidden"
         >
           <div className="max-h-96 overflow-y-auto">
             {chats.map((chat) => (
@@ -431,13 +472,9 @@ const ChatInterface: React.FC = () => {
                 key={chat.id}
                 className={`group flex items-center justify-between p-2 ${
                   chat.id === (currentChatId || chats[0].id)
-                    ? theme === 'dark'
-                      ? 'bg-[#27272A] text-gray-100 border-l-[#6366F1]'
-                      : 'bg-gray-100 text-gray-900 border-l-[#6366F1]'
-                    : theme === 'dark'
-                      ? 'border-l-transparent hover:border-l-[#6366F1] text-gray-300'
-                      : 'border-l-transparent hover:border-l-[#6366F1] text-gray-600'
-                } cursor-pointer border-l-2 hover:bg-${theme === 'dark' ? '[#27272A]' : 'gray-100'}`}
+                    ? "bg-tertiary text-primary border-l-accent"
+                    : "border-l-transparent hover:border-l-accent text-secondary"
+                } cursor-pointer border-l-2 hover:bg-tertiary`}
               >
                 <div 
                   className="flex-1 min-w-0"
@@ -449,7 +486,7 @@ const ChatInterface: React.FC = () => {
                   {editingChatId === chat.id ? (
                     <input
                       type="text"
-                      className="w-full px-2 py-1 bg-[#0D0D0D] text-gray-100 border border-[#27272A] rounded text-xs focus:outline-none focus:border-[#6366F1]"
+                      className="w-full px-2 py-1 bg-primary text-primary border border-primary rounded text-xs focus:outline-none focus:border-accent"
                       value={chat.title}
                       onChange={(e) => updateChatTitle(chat.id, e.target.value)}
                       onBlur={() => setEditingChatId(null)}
@@ -464,7 +501,7 @@ const ChatInterface: React.FC = () => {
                   ) : (
                     <div>
                       <div className="text-sm truncate font-medium">{chat.title}</div>
-                      <div className="text-xs text-gray-500">
+                      <div className="text-xs text-tertiary">
                         {formatDate(chat.lastUpdatedAt)}
                       </div>
                     </div>
@@ -472,7 +509,7 @@ const ChatInterface: React.FC = () => {
                 </div>
                 <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                   <button
-                    className="p-1 hover:bg-[#3F3F46] rounded transition-colors text-gray-400 hover:text-gray-200"
+                    className="p-1 hover:bg-tertiary rounded transition-colors text-secondary hover:text-primary"
                     onClick={(e) => {
                       e.stopPropagation();
                       setEditingChatId(chat.id);
@@ -482,7 +519,7 @@ const ChatInterface: React.FC = () => {
                     <LucideEdit2 size={12} />
                   </button>
                   <button
-                    className="p-1 hover:bg-[#3F3F46] rounded transition-colors text-gray-400 hover:text-gray-200"
+                    className="p-1 hover:bg-tertiary rounded transition-colors text-secondary hover:text-primary"
                     onClick={(e) => {
                       e.stopPropagation();
                       deleteChat(chat.id);
@@ -509,9 +546,7 @@ const ChatInterface: React.FC = () => {
       )}
 
       {/* Chat messages area */}
-      <div className={`flex-1 overflow-auto px-6 py-4 ${hasMessages ? 'mt-12' : ''} ${
-        theme === 'dark' ? 'bg-[#0A0A0A]' : 'bg-white'
-      }`}>
+      <div className={`flex-1 overflow-auto px-6 py-4 bg-primary ${hasMessages ? 'mt-12' : ''}`}>
         {visibleMessages.map((message, index) => (
           <div
             key={message.key}
@@ -520,21 +555,15 @@ const ChatInterface: React.FC = () => {
             } ${index > 0 ? 'mt-8' : ''}`}
           >
             {/* Avatar */}
-            <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 ${
+            <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 avatar-icon ${
               message.sender === Sender.User 
-                ? 'bg-gradient-to-br from-[#6366F1] to-[#4F46E5]' 
-                : 'bg-gradient-to-br from-[#18181B] to-[#27272A] border border-[#27272A]'
+                ? 'avatar-user-gradient' 
+                : 'avatar-bot-gradient border border-avatar-bot'
             }`}>
               {message.sender === Sender.User ? (
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="text-white">
-                  <path d="M8 8C10.2091 8 12 6.20914 12 4C12 1.79086 10.2091 0 8 0C5.79086 0 4 1.79086 4 4C4 6.20914 5.79086 8 8 8Z" fill="currentColor"/>
-                  <path d="M8 9C5.33333 9 0 10.3333 0 13V14C0 15.1046 0.895431 16 2 16H14C15.1046 16 16 15.1046 16 14V13C16 10.3333 10.6667 9 8 9Z" fill="currentColor"/>
-                </svg>
+                <LucideUser size={16} />
               ) : (
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="text-white">
-                  <path d="M8 1.5C11.5899 1.5 14.5 4.41015 14.5 8C14.5 11.5899 11.5899 14.5 8 14.5C4.41015 14.5 1.5 11.5899 1.5 8C1.5 4.41015 4.41015 1.5 8 1.5Z" stroke="currentColor" strokeWidth="1.5"/>
-                  <path d="M5 8H11M5 5.5H11M5 10.5H9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                </svg>
+                <LucideBot size={16} />
               )}
             </div>
 
@@ -544,18 +573,16 @@ const ChatInterface: React.FC = () => {
             }`}>
               <div className={`relative rounded-2xl px-5 pb-3.5 pt-2 ${
                 message.sender === Sender.User
-                  ? 'bg-gradient-to-br from-[#6366F1] to-[#4F46E5] text-white'
-                  : theme === 'dark'
-                    ? 'bg-[#18181B] text-gray-100 border border-[#27272A]'
-                    : 'bg-gray-50 text-gray-900 border border-gray-200'
+                  ? 'user-message-gradient border border-primary'
+                  : 'bg-secondary text-primary border border-primary'
               }`}>
                 {/* Delete button */}
                 <div className={`absolute -top-2 ${message.sender === Sender.User ? '-left-2' : '-right-2'} opacity-0 group-hover:opacity-100 transition-opacity`}>
                   <button
                     className={`p-1.5 rounded-full shadow-lg ${
                       message.sender === Sender.User
-                        ? 'bg-[#4F46E5] text-white hover:bg-[#4338CA]'
-                        : 'bg-[#27272A] text-white hover:bg-[#3F3F46] border border-[#3F3F46]'
+                        ? 'delete-user-button'
+                        : 'delete-bot-button border'
                     }`}
                     onClick={() => handleDeleteMessage(message)}
                   >
@@ -585,38 +612,9 @@ const ChatInterface: React.FC = () => {
         ))}
       </div>
 
-      {/* Follow-up suggestions */}
-      {followupSuggestions?.length > 0 && (
-        <div className={`sticky bottom-0 z-10 px-4 py-2 border-t ${
-          theme === 'dark' 
-            ? 'border-[#27272A] bg-[#0A0A0A]' 
-            : 'border-gray-200 bg-white'
-        }`}>
-          <div className="mx-auto flex gap-2 overflow-x-auto pb-1">
-            {followupSuggestions?.map((suggestion, index) => (
-              <button
-                key={index}
-                className={`px-3 py-1.5 rounded-lg text-xs whitespace-nowrap transition-colors ${
-                  theme === 'dark'
-                    ? 'bg-[#27272A] text-gray-200 hover:bg-[#3F3F46]'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
-                onClick={() => sendMessage(suggestion)}
-              >
-                {suggestion}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
       {/* Input area container */}
       {hasMessages && (
-        <div className={`sticky bottom-0 z-10 border-t ${
-          theme === 'dark' 
-            ? 'border-[#27272A] bg-[#0A0A0A]' 
-            : 'border-gray-200 bg-white'
-        }`}>
+        <div className="sticky bottom-0 z-10 border-t border-primary bg-primary">
           <InputArea />
         </div>
       )}

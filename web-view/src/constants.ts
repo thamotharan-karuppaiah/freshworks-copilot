@@ -43,13 +43,14 @@ WHAT YOU CAN ASK:
 
 RESPONSE FORMAT:
 1. Responses will be in markdown format for clear reading
-2. Special actions are marked with specific tags:
+2. Special actions can be used in any order throughout the response and are marked with specific tags:
 
    For code files:
+   You can describe the file's purpose in markdown before the file block:
+   
+   This button component provides a reusable UI element with TypeScript props and hover effects.
    ---@file:start fileName="path/to/file" type="fileType"
-   \`\`\`language
-   code content here
-   \`\`\`
+   code content here (DO NOT use markdown code fence markers like \`\`\` inside file blocks)
    ---@file:end
 
    For Figma inspection:
@@ -61,22 +62,50 @@ RESPONSE FORMAT:
    - Suggestion 2
 
 Example Response:
-Here's the Button component you requested.
+I've created a reusable button component with hover effects.
 
+Here's the main button component that provides a flexible, type-safe interface with support for variants:
 ---@file:start fileName="components/Button.tsx" type="tsx"
-\`\`\`tsx
-export const Button = () => {
-  return <button>Click me</button>
+interface ButtonProps {
+  label: string;
+  onClick?: () => void;
+  variant?: 'primary' | 'secondary';
 }
-\`\`\`
+
+export const Button = ({ label, onClick, variant = 'primary' }: ButtonProps) => {
+  return (
+    <button 
+      className={\`btn \${variant}\`}
+      onClick={onClick}
+    >
+      {label}
+    </button>
+  );
+};
 ---@file:end
 
-Let me know if you need any modifications.
+And here are the corresponding styles that handle the button's appearance and animations:
+---@file:start fileName="styles/button.css" type="css"
+.btn {
+  padding: 8px 16px;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+.btn.primary {
+  background: #0066ff;
+  color: white;
+}
+.btn:hover {
+  transform: translateY(-1px);
+}
+---@file:end
+
+The button component is now ready to use. I've included both the component and its styles.
 
 ---@followups
-- How do I style this button?
-- Can you add click handling?
-- How do I make this button responsive?
+- How do I add loading states?
+- Can you show how to use this button in a form?
+- How do I add custom animations?
 `;
 
 export const LlmPromptXML = LlmPrompJSON;
@@ -87,7 +116,6 @@ export interface ParsedResponse {
   inspectRequested: boolean;
   files?: {
     fileType: string;
-    message?: string;
     fileName: string;
     content: string;
   }[];
@@ -107,55 +135,55 @@ export function parseMessage(message: string): ParsedResponse {
     followups: []
   };
 
-  // Split message into sections based on markers
-  const sections = message.split(/---@/);
-  
-  // First section is always the main message
-  let mainMessage = sections[0];
-
-  // Remove followups section from main message if it exists
-  const followupsMarkerIndex = mainMessage.toLowerCase().indexOf('\nfollowups:');
-  if (followupsMarkerIndex !== -1) {
-    mainMessage = mainMessage.substring(0, followupsMarkerIndex);
+  // Check and extract figma:inspect markers
+  if (message.includes('---@figma:inspect')) {
+    console.log('Figma inspect marker found in message');
+    response.inspectRequested = true;
+  } else {
+    console.log('No Figma inspect marker found in message');
   }
 
-  response.message = mainMessage.trim();
-
-  // Process remaining sections
-  for (let i = 1; i < sections.length; i++) {
-    const section = sections[i];
+  // Extract followups sections
+  const followupsMatch = message.match(/---@followups\s+([\s\S]*?)($|---@)/);
+  if (followupsMatch) {
+    const followupsSection = followupsMatch[1];
+    console.log('Found followups section:', followupsSection);
+    const suggestions = followupsSection.split('\n')
+      .filter(line => line.trim().startsWith('-'))
+      .map(line => line.trim().substring(1).trim());
     
-    if (section.startsWith('file:start')) {
-      // Extract file info and handle streaming code blocks
-      const fileNameMatch = section.match(/fileName="([^"]+)"/);
-      const typeMatch = section.match(/type="([^"]+)"/);
-      let content = '';
-      
-      // Find the code block content, even if it's incomplete
-      const codeBlockMatch = section.match(/```[\w-]*\n([\s\S]*?)($|```)/);
-      if (codeBlockMatch) {
-        content = codeBlockMatch[1];
-      }
-      
-      if (fileNameMatch && typeMatch) {
-        response.type = 'code';
-        response.files.push({
-          fileName: fileNameMatch[1],
-          fileType: typeMatch[1],
-          content: content.trim(),
-          message: 'Generated file'
-        });
-      }
-    } else if (section.startsWith('figma:inspect')) {
-      response.inspectRequested = true;
-    } else if (section.startsWith('followups')) {
-      const suggestions = section.split('\n')
-        .filter(line => line.trim().startsWith('-'))
-        .map(line => line.trim().substring(1).trim());
+    if (suggestions.length > 0) {
+      console.log('Extracted followup suggestions:', suggestions);
       response.followups = suggestions;
     }
   }
-
+  
+  // Extract file blocks - modified to not rely on markdown backticks
+  const fileBlocks = message.match(/---@file:start[\s\S]*?---@file:end/g) || [];
+  if (fileBlocks.length > 0) {
+    response.type = 'code';
+    
+    for (const block of fileBlocks) {
+      const fileNameMatch = block.match(/fileName="([^"]+)"/);
+      const typeMatch = block.match(/type="([^"]+)"/);
+      
+      if (fileNameMatch && typeMatch) {
+        // Extract the content directly between the file name line and the end marker
+        const contentMatch = block.match(/fileName="[^"]+"\s*\n([\s\S]*?)---@file:end/);
+        const fileContent = contentMatch ? contentMatch[1].trim() : "";
+        
+        response.files.push({
+          fileName: fileNameMatch[1],
+          fileType: typeMatch[1],
+          content: fileContent
+        });
+      }
+    }
+  }
+  
+  // Set the message without removing anything
+  response.message = message;
+  
   return response;
 }
 

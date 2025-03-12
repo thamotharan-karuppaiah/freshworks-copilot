@@ -40,11 +40,11 @@ const LoadingText: React.FC<{ startTime: number }> = ({ startTime }) => {
   }, [startTime]);
 
   return (
-    <div className="flex items-center gap-2 bg-[var(--vscode-textBlockQuote-background)] px-3 py-2 rounded">
+    <div className="flex items-center gap-2 bg-secondary px-3 py-2 rounded">
       <div className="relative w-3 h-3">
-        <div className="absolute inset-0 border border-[var(--vscode-textLink-foreground)] rounded-full animate-spin"></div>
+        <div className="absolute inset-0 border border-accent rounded-full animate-spin"></div>
       </div>
-      <span className="text-xs text-[var(--vscode-editor-foreground)]">
+      <span className="text-xs text-primary">
         {loadingMessage}{dots}
       </span>
     </div>

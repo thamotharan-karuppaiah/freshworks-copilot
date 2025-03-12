@@ -56,9 +56,7 @@ const FigmaInspector: React.FC = () => {
 	};
 
 	return (
-		<div className={`fixed w-full h-full grid grid-rows-2 grid-cols-1 ${
-			theme === 'dark' ? 'bg-[#0A0A0A]' : 'bg-white'
-		}`}>
+		<div className="fixed w-full h-full grid grid-rows-2 grid-cols-1 bg-primary">
 			<div className='row-span-1'>
 				<FigspecFrameViewer
 					className='w-full h-full'
@@ -67,13 +65,9 @@ const FigmaInspector: React.FC = () => {
 					onNodeSelect={onNodeSelect}
 				/>
 			</div>
-			<div className={`row-span-1 grid grid-cols-2 h-full ${
-				theme === 'dark' ? 'bg-[#18181B]' : 'bg-gray-50'
-			}`}>
+			<div className="row-span-1 grid grid-cols-2 h-full bg-secondary">
 				<div className='p-4 flex flex-col h-full'>
-					<h2 className={`font-bold mb-2 ${
-						theme === 'dark' ? 'text-gray-100' : 'text-gray-900'
-					}`}>HTML</h2>
+					<h2 className="font-bold mb-2 text-primary">HTML</h2>
 					<div className='flex-grow'>
 						<CodeMirror
 							value={formattedHtml}
@@ -94,27 +88,17 @@ const FigmaInspector: React.FC = () => {
 				</div>
 				<div className='p-4 flex flex-col h-full'>
 					<div className='flex justify-between items-center mb-2'>
-						<h2 className={`font-bold ${
-							theme === 'dark' ? 'text-gray-100' : 'text-gray-900'
-						}`}>Preview</h2>
+						<h2 className="font-bold text-primary">Preview</h2>
 						<div className='flex'>
 							<button
 								onClick={handleZoomIn}
-								className={`mr-2 px-2 py-1 rounded ${
-									theme === 'dark'
-										? 'bg-[#6366F1] text-white hover:bg-[#4F46E5]'
-										: 'bg-blue-500 text-white hover:bg-blue-600'
-								}`}
+								className="mr-2 px-2 py-1 rounded accent-primary hover:accent-hover"
 							>
 								+
 							</button>
 							<button
 								onClick={handleZoomOut}
-								className={`px-2 py-1 rounded ${
-									theme === 'dark'
-										? 'bg-[#6366F1] text-white hover:bg-[#4F46E5]'
-										: 'bg-blue-500 text-white hover:bg-blue-600'
-								}`}
+								className="px-2 py-1 rounded accent-primary hover:accent-hover"
 							>
 								-
 							</button>
