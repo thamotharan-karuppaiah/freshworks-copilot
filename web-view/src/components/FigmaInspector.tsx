@@ -5,8 +5,10 @@ import { createComponent } from '../util/figma-html';
 import { Controlled as CodeMirror } from 'react-codemirror2';
 import 'codemirror/lib/codemirror.css';
 import 'codemirror/theme/material.css';
+import 'codemirror/theme/solarized.css';
 import 'codemirror/mode/xml/xml';
 import { html as beautifyHtml } from 'js-beautify';
+import useThemeStore from '../store/theme-store';
 
 const FigmaInspector: React.FC = () => {
 	const [fileResponse, setFileResponse] = useState<any>();
@@ -16,6 +18,7 @@ const FigmaInspector: React.FC = () => {
 	const [formattedHtml, setFormattedHtml] = useState('');
 	const [scale, setScale] = useState(1);
 	const editorRef = useRef(null);
+	const { theme } = useThemeStore();
 
 	useEffect(() => {
 		const handleMessage = (event: MessageEvent) => {
@@ -53,7 +56,9 @@ const FigmaInspector: React.FC = () => {
 	};
 
 	return (
-		<div className='fixed w-full h-full grid grid-rows-2 grid-cols-1'>
+		<div className={`fixed w-full h-full grid grid-rows-2 grid-cols-1 ${
+			theme === 'dark' ? 'bg-[#0A0A0A]' : 'bg-white'
+		}`}>
 			<div className='row-span-1'>
 				<FigspecFrameViewer
 					className='w-full h-full'
@@ -62,16 +67,20 @@ const FigmaInspector: React.FC = () => {
 					onNodeSelect={onNodeSelect}
 				/>
 			</div>
-			<div className='row-span-1 grid grid-cols-2 h-full'>
+			<div className={`row-span-1 grid grid-cols-2 h-full ${
+				theme === 'dark' ? 'bg-[#18181B]' : 'bg-gray-50'
+			}`}>
 				<div className='p-4 flex flex-col h-full'>
-					<h2 className='font-bold mb-2'>HTML</h2>
+					<h2 className={`font-bold mb-2 ${
+						theme === 'dark' ? 'text-gray-100' : 'text-gray-900'
+					}`}>HTML</h2>
 					<div className='flex-grow'>
 						<CodeMirror
 							value={formattedHtml}
 							ref={editorRef}
 							options={{
 								mode: 'xml',
-								theme: 'material',
+								theme: theme === 'dark' ? 'material' : 'solarized light',
 								lineNumbers: true,
 								lineWrapping: true
 							}}
@@ -85,32 +94,41 @@ const FigmaInspector: React.FC = () => {
 				</div>
 				<div className='p-4 flex flex-col h-full'>
 					<div className='flex justify-between items-center mb-2'>
-						<h2 className='font-bold'>Preview</h2>
+						<h2 className={`font-bold ${
+							theme === 'dark' ? 'text-gray-100' : 'text-gray-900'
+						}`}>Preview</h2>
 						<div className='flex'>
 							<button
 								onClick={handleZoomIn}
-								className='mr-2 bg-blue-500 text-white px-2 py-1 rounded'
+								className={`mr-2 px-2 py-1 rounded ${
+									theme === 'dark'
+										? 'bg-[#6366F1] text-white hover:bg-[#4F46E5]'
+										: 'bg-blue-500 text-white hover:bg-blue-600'
+								}`}
 							>
 								+
 							</button>
 							<button
 								onClick={handleZoomOut}
-								className='bg-blue-500 text-white px-2 py-1 rounded'
+								className={`px-2 py-1 rounded ${
+									theme === 'dark'
+										? 'bg-[#6366F1] text-white hover:bg-[#4F46E5]'
+										: 'bg-blue-500 text-white hover:bg-blue-600'
+								}`}
 							>
 								-
 							</button>
 						</div>
 					</div>
-					<div
-						className='border-0 overflow-auto h-full'
-					>
+					<div className='border-0 overflow-auto h-full'>
 						<div style={{ transform: `scale(${scale})`, transformOrigin: 'top left' }} className='absolute w-full h-full'>
 							<iframe
 								srcDoc={htmlText}
 								width="100%"
 								height="100%"
-								className='border-0 '
-							></iframe></div>
+								className='border-0'
+							></iframe>
+						</div>
 					</div>
 				</div>
 			</div>
