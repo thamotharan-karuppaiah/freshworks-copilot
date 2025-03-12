@@ -25,7 +25,9 @@ interface Props {
 }
 
 const LlmResponse: React.FC<Props> = ({ data }) => {
-	let { messages } = useChatStore();
+	const { chats, currentChatId } = useChatStore();
+	const currentChat = chats.find(chat => chat.id === (currentChatId || chats[0].id));
+	const messages = currentChat?.messages || [];
 	let [availableFigmaDesigns, setAvailableFigmaDesigns] = useState<Message[]>([]);
 	let message: Data = null;
 	message = useMemo(() => { return parseMessage(data) }, [data]);

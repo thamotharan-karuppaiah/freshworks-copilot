@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { openConfiguration, sendCopyCliboardRequest, sendCreateFileRequest } from './copilot';
-import fetch from 'node-fetch';
+import * as https from 'https';
 
 let chatWebView: vscode.Webview;
 
@@ -86,6 +86,42 @@ async function openAllFiles(files: { fileName: string }[]) {
 	}
 }
 
+async function makeHttpRequest(url: string, options: any, data: any): Promise<string> {
+	return new Promise((resolve, reject) => {
+		const req = https.request(url, options, (res) => {
+			let responseData = '';
+			
+			res.on('data', (chunk) => {
+				responseData += chunk;
+				// Send chunk to webview
+				if (chatWebView) {
+					chatWebView.postMessage({
+						command: 'cloudverseResponse',
+						data: chunk.toString()
+					});
+				}
+			});
+
+			res.on('end', () => {
+				if (res.statusCode && (res.statusCode < 200 || res.statusCode >= 300)) {
+					reject(new Error(`HTTP error! status: ${res.statusCode}, body: ${responseData}`));
+				} else {
+					resolve(responseData);
+				}
+			});
+		});
+
+		req.on('error', (error) => {
+			reject(error);
+		});
+
+		if (data) {
+			req.write(JSON.stringify(data));
+		}
+		req.end();
+	});
+}
+
 export function registerWebViewEvents(webview: vscode.Webview) {
 	chatWebView = webview;
 	webview.onDidReceiveMessage(async data => {
@@ -160,43 +196,15 @@ export function registerWebViewEvents(webview: vscode.Webview) {
 						console.log('Request headers:', data.data.headers);
 						console.log('Request body:', data.data.data);
 
-						const response = await fetch(data.data.url, {
+						const options = {
 							method: 'POST',
 							headers: {
 								...data.data.headers,
-								'User-Agent': 'Node.js',
 								'Content-Type': 'application/json',
-							},
-							body: JSON.stringify(data.data.data)
-						});
-
-						if (!response.ok) {
-							const errorBody = await response.text();
-							console.error('Server error response:', {
-								status: response.status,
-								statusText: response.statusText,
-								headers: response.headers,
-								body: errorBody
-							});
-							throw new Error(`HTTP error! status: ${response.status}, body: ${errorBody}`);
-						}
-
-						// Get the response as text
-						const text = await response.text();
-						console.log('Received response:', text.substring(0, 200) + '...'); // Log first 200 chars
-
-						// Split by newlines but preserve empty lines
-						const lines = text.split(/(\r\n|\n|\r)/);
-						
-						// Send each chunk with preserved line breaks
-						for (const line of lines) {
-							if (line.trim() || line.match(/(\r\n|\n|\r)/)) {  // Send if line has content or is a line break
-								webview.postMessage({
-									command: 'cloudverseResponse',
-									data: line
-								});
 							}
-						}
+						};
+
+						await makeHttpRequest(data.data.url, options, data.data.data);
 
 						// Signal completion
 						webview.postMessage({
