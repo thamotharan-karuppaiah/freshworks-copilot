@@ -32,12 +32,23 @@ const LlmResponse: React.FC<Props> = ({ data }) => {
 
 	const { type, message: responseMessage, inspectRequested, files } = message;
 
-	const createFile = (file: File) => {
-		sendCreateFileRequest(file.fileName, file.content);
+	const createFile = async (file: File) => {
+		try {
+			await sendCreateFileRequest(file.fileName, file.content);
+		} catch (error) {
+			console.error('Error creating file:', error);
+		}
 	};
 
-	const createAllFiles = () => {
-		sendCreateFilesRequest(files);
+	const createAllFiles = async () => {
+		if (!files || files.length === 0) return;
+		
+		try {
+			// Send all files to be created in parallel
+			await sendCreateFilesRequest(files);
+		} catch (error) {
+			console.error('Error creating files:', error);
+		}
 	};
 
 	const copyFile = (file: File) => {
@@ -79,7 +90,6 @@ const LlmResponse: React.FC<Props> = ({ data }) => {
 							PreTag="div"
 							children={String(children).replace(/\n$/, '')}
 							language={match[1]}
-						// style={dark}
 						/>
 					) : (
 						<code {...rest} className={className}>
@@ -91,53 +101,128 @@ const LlmResponse: React.FC<Props> = ({ data }) => {
 	}
 
 	return (
-		<>
-			<div><MarkDownIt>{responseMessage}</MarkDownIt></div>
-			{inspectRequested && <button className="bg-blue-500 text-white py-2 px-4 rounded mt-2 hover:bg-blue-600" onClick={onInspectFigma}>Inspect</button>}
+		<div className="space-y-3">
+			{/* Main message content */}
+			<div className="prose prose-sm max-w-none prose-pre:my-0 prose-p:my-3 prose-headings:my-3 prose-ul:my-3 prose-ol:my-3 whitespace-pre-wrap">
+				<MarkDownIt>{responseMessage}</MarkDownIt>
+			</div>
+
+			{/* Inspect button */}
+			{inspectRequested && (
+				<button 
+					className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[var(--vscode-button-background)] text-[var(--vscode-button-foreground)] rounded text-xs hover:bg-[var(--vscode-button-hoverBackground)] transition-colors" 
+					onClick={onInspectFigma}
+				>
+					<svg width="12" height="12" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+						<path d="M2 8C2 4.68629 4.68629 2 8 2C11.3137 2 14 4.68629 14 8C14 11.3137 11.3137 14 8 14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+						<path d="M8 5V8L10 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+					</svg>
+					Inspect
+				</button>
+			)}
+
+			{/* Figma designs popup */}
 			{availableFigmaDesigns.length > 0 && (
-				<div className="mt-4 p-2 border rounded relative">
-					<div className="font-medium mb-2 flex justify-between items-center">
-						<span>Available Figma Designs - Click to Inspect:</span>
-						<button className="text-gray-500 hover:text-gray-700" onClick={closeAvailableFigmaDesigns}>x</button>
+				<div className="bg-[var(--vscode-chat-background)] border border-[var(--vscode-panel-border)] rounded overflow-hidden">
+					<div className="px-3 py-2 border-b border-[var(--vscode-panel-border)] flex justify-between items-center">
+						<span className="text-xs font-medium">Available Figma Designs</span>
+						<button 
+							className="p-1 hover:bg-[var(--vscode-toolbar-hoverBackground)] rounded transition-colors"
+							onClick={closeAvailableFigmaDesigns}
+						>
+							<svg width="10" height="10" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+								<path d="M12 4L4 12M4 4L12 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+							</svg>
+						</button>
 					</div>
-					{availableFigmaDesigns.map((msg, i) => (
-						<div key={i} className="p-2 border-b last:border-b-0 hover:bg-gray-100 cursor-pointer" onClick={() => openIspector(msg)}>{msg.figmaResponse.nodeResponse.name}</div>
-					))}
+					<div className="p-1">
+						{availableFigmaDesigns.map((msg, i) => (
+							<div 
+								key={i} 
+								className="px-2 py-1.5 hover:bg-[var(--vscode-toolbar-hoverBackground)] rounded cursor-pointer transition-colors flex items-center gap-1.5 text-xs"
+								onClick={() => openIspector(msg)}
+							>
+								<svg width="12" height="12" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+									<path d="M8 2H4C2.89543 2 2 2.39543 2 3.5V12.5C2 13.6046 2.89543 14.5 4 14.5H12C13.1046 14.5 14 13.6046 14 12.5V6.5L9 1.5H4Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+									<path d="M9 1.5V6.5H14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+								</svg>
+								<span>{msg.figmaResponse.nodeResponse.name}</span>
+							</div>
+						))}
+					</div>
 				</div>
 			)}
+
+			{/* Code files section */}
 			{type === 'code' && (
-				<div className="mt-4 has-files relative">
-					{files && files.length > 0 && (
+				<div className="space-y-3">
+					{files && files.length > 1 && (
 						<button
-							className="bg-gray-800 text-gray-300 py-1 px-3 rounded absolute top-0 right-0 mt-2 text-sm hidden"
+							className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[var(--vscode-button-background)] text-[var(--vscode-button-foreground)] rounded text-xs hover:bg-[var(--vscode-button-hoverBackground)] transition-colors"
 							title='Create all files in the response to your current workspace.'
-							onClick={createAllFiles}>
+							onClick={createAllFiles}
+						>
+							<svg width="10" height="10" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+								<path d="M8 2V14M14 8H2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+							</svg>
 							Create all files
 						</button>
 					)}
 					{files?.map((file, index) => (
-						<div key={index} className="mt-2">
-							<div className="font-medium">{file.message}</div>
-							<div className="flex items-center mt-2 bg-gray-800 text-gray-300 text-xs p-2 rounded-t">
-								{file.fileName}
-								<a className="flex items-center ml-auto cursor-pointer font-medium" onClick={() => copyFile(file)}>
-									<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" className="icon-sm mr-1"><path fill="currentColor" fillRule="evenodd" d="M7 5a3 3 0 0 1 3-3h9a3 3 0 0 1 3 3v9a3 3 0 0 1-3 3h-2v2a3 3 0 0 1-3 3H5a3 3 0 0 1-3-3v-9a3 3 0 0 1 3-3h2zm2 2h5a3 3 0 0 1 3 3v5h2a1 1 0 0 0 1-1V5a1 1 0 0 0-1-1h-9a1 1 0 0 0-1 1zM5 9a1 1 0 0 0-1 1v9a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1v-9a1 1 0 0 0-1-1z" clipRule="evenodd"></path></svg>
-									Copy code
-								</a>
-								<a className="cursor-pointer font-medium ml-2" onClick={() => createFile(file)}>Create file</a>
+						<div key={index} className="bg-[var(--vscode-chat-background)] border border-[var(--vscode-panel-border)] rounded overflow-hidden">
+							<div className="p-3 border-b border-[var(--vscode-panel-border)]">
+								<div className="text-xs mb-2">{file.message}</div>
+								<div className="flex items-center gap-3 text-xs">
+									<div className="flex items-center gap-1.5 text-[var(--vscode-descriptionForeground)]">
+										<svg width="12" height="12" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+											<path d="M4 1.5C2.89543 1.5 2 2.39543 2 3.5V12.5C2 13.6046 2.89543 14.5 4 14.5H12C13.1046 14.5 14 13.6046 14 12.5V6.5L9 1.5H4Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+											<path d="M9 1.5V6.5H14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+										</svg>
+										{file.fileName}
+									</div>
+									<div className="flex items-center gap-2 ml-auto">
+										<button 
+											className="inline-flex items-center gap-1 hover:text-[var(--vscode-textLink-foreground)] transition-colors"
+											onClick={() => copyFile(file)}
+										>
+											<svg width="12" height="12" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+												<path d="M6 4.5V3.5C6 2.67157 6.67157 2 7.5 2H12.5C13.3284 2 14 2.67157 14 3.5V8.5C14 9.32843 13.3284 10 12.5 10H11.5M3.5 6H8.5C9.32843 6 10 6.67157 10 7.5V12.5C10 13.3284 9.32843 14 8.5 14H3.5C2.67157 14 2 13.3284 2 12.5V7.5C2 6.67157 2.67157 6 3.5 6Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+											</svg>
+											Copy
+										</button>
+										<button 
+											className="inline-flex items-center gap-1 hover:text-[var(--vscode-textLink-foreground)] transition-colors"
+											onClick={() => createFile(file)}
+										>
+											<svg width="12" height="12" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+												<path d="M8 3.5V12.5M12.5 8H3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+											</svg>
+											Create
+										</button>
+									</div>
+								</div>
 							</div>
-							<div className={`p-2 bg-gray-100 text-xs relative overflow-hidden ${showFullContent ? '' : 'max-h-40 overflow-y-scroll'}`}>
-								{/* <pre className="whitespace-pre-wrap">{"~~~" + file.fileType + " \n " + file.content + " \n~~~"}</pre> */}
-								<MarkDownIt children={"```" + file.fileType + " \n" + file.content + " \n```"}></MarkDownIt>
+							<div className={`relative ${showFullContent ? '' : 'max-h-[400px] overflow-y-auto'}`}>
+								<div className="p-3 bg-[var(--vscode-editor-background)]">
+									<MarkDownIt children={"```" + file.fileType + "\n" + file.content + "\n```"}></MarkDownIt>
+								</div>
 								{!showFullContent && (
-									<button className="absolute bottom-0 right-0 bg-gray-200 text-blue-500 px-2 py-1 rounded-md" onClick={toggleShowContent}>Show more</button>
+									<div className="absolute bottom-0 inset-x-0 h-12 bg-gradient-to-t from-[var(--vscode-editor-background)] to-transparent pointer-events-none"/>
+								)}
+								{!showFullContent && (
+									<button 
+										className="absolute bottom-2 right-2 px-2 py-1 bg-[var(--vscode-button-background)] text-[var(--vscode-button-foreground)] rounded text-xs hover:bg-[var(--vscode-button-hoverBackground)] transition-colors"
+										onClick={toggleShowContent}
+									>
+										Show more
+									</button>
 								)}
 							</div>
 						</div>
 					))}
 				</div>
 			)}
-		</>
+		</div>
 	);
 };
 

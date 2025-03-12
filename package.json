@@ -54,47 +54,12 @@
 				"fwCopilot.figmaPersonalToken": {
 					"type": "string",
 					"default": "",
-					"description": "Gemini API Key for fwCopilot plugin"
+					"description": "Figma Personal Access Token for fwCopilot plugin"
 				},
-				"fwCopilot.geminiApiKey": {
+				"fwCopilot.cloudverseApiKey": {
 					"type": "string",
 					"default": "",
-					"description": "Gemini API Key for fwCopilot plugin"
-				},
-				"fwCopilot.chatGptApiKey": {
-					"type": "string",
-					"default": "",
-					"description": "ChatGPT API Key for fwCopilot plugin"
-				},
-				"fwCopilot.chatGptEndpoint": {
-					"type": "string",
-					"default": "https://api.openai.com/v1",
-					"description": "ChatGPT Base URL for fwCopilot plugin"
-				},
-				"fwCopilot.chatGptModel": {
-					"type": "string",
-					"default": "gpt-3.5-turbo",
-					"description": "ChatGPT Model for fwCopilot plugin"
-				},
-				"fwCopilot.cohereaiApiKey": {
-					"type": "string",
-					"default": "",
-					"description": "Coherai API Key for fwCopilot plugin"
-				},
-				"fwCopilot.claudeApiKey": {
-					"type": "string",
-					"default": "",
-					"description": "Claude API Key for fwCopilot plugin"
-				},
-				"fwCopilot.claudeModel": {
-					"type": "string",
-					"default": "",
-					"description": "claudeModel to be used with, default: claude-3-opus-20240229"
-				},
-				"fwCopilot.deepaiApiKey": {
-					"type": "string",
-					"default": "",
-					"description": "DeepAI API Key for fwCopilot plugin"
+					"description": "Cloudverse API Key for accessing LLM services"
 				},
 				"fwCopilot.promptResponseType": {
 					"type": "string",
@@ -135,12 +100,11 @@
 		"webpack-dev-server": "^5.0.4"
 	},
 	"dependencies": {
-		"@google/generative-ai": "^0.12.0",
-		"@langchain/core": "^0.3.42",
-		"@langchain/google-genai": "^0.1.10",
+		"@types/node-fetch": "^2.6.12",
 		"axios": "^1.7.2",
 		"babel-loader": "^9.1.3",
-		"deepai": "^1.0.23",
+		"lucide-react": "^0.479.0",
+		"node-fetch": "^2.7.0",
 		"tailwindcss": "^3.4.3"
 	}
 }

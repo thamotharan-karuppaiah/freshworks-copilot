@@ -1,40 +1,53 @@
 import React, { useEffect, useState } from 'react';
 
 const secondTimeoutMessages = [
-  'Crafting a response...',
-  'Searching the knowledge vault...',
+  'Analyzing context...',
+  'Processing request...',
+  'Gathering information...',
 ];
 
 const thirdTimeoutMessages = [
-  'Hold on a sec, brewing some magic...',
-  'Just a moment, gathering more info...',
-  'This might take a bit longer...',
+  'Generating detailed response...',
+  'Finalizing solution...',
+  'Almost there...',
+  'Polishing response...',
 ];
 
-const LoadingText = ({ startTime }) => {
+const LoadingText: React.FC<{ startTime: number }> = ({ startTime }) => {
   const [loadingMessage, setLoadingMessage] = useState('Thinking...');
+  const [dots, setDots] = useState('');
 
   useEffect(() => {
+    // Dots animation
+    const dotsInterval = setInterval(() => {
+      setDots(prev => prev.length >= 3 ? '' : prev + '.');
+    }, 500);
+
+    // Message updates
     const timeout2 = setTimeout(() => {
       setLoadingMessage(secondTimeoutMessages[Math.floor(Math.random() * secondTimeoutMessages.length)]);
-    }, 5000); // Update with random message from second set after 5 seconds
+    }, 5000);
 
     const timeout3 = setTimeout(() => {
       setLoadingMessage(thirdTimeoutMessages[Math.floor(Math.random() * thirdTimeoutMessages.length)]);
-    }, 10000); // Update with random message from third set after 10 seconds
+    }, 10000);
 
-    const cleanup = () => {
-      // clearTimeout(timeout1);
+    return () => {
+      clearInterval(dotsInterval);
       clearTimeout(timeout2);
       clearTimeout(timeout3);
     };
-
-    // Cleanup function to clear timeouts on unmount
-    return cleanup;
-  }, [startTime]); // Dependency array ensures effect runs only on initial render
+  }, [startTime]);
 
   return (
-    <>{loadingMessage}</>
+    <div className="flex items-center gap-2 bg-[var(--vscode-textBlockQuote-background)] px-3 py-2 rounded">
+      <div className="relative w-3 h-3">
+        <div className="absolute inset-0 border border-[var(--vscode-textLink-foreground)] rounded-full animate-spin"></div>
+      </div>
+      <span className="text-xs text-[var(--vscode-editor-foreground)]">
+        {loadingMessage}{dots}
+      </span>
+    </div>
   );
 };
 

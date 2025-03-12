@@ -4,7 +4,6 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { FigmaFileInfo } from '../util/figma';
 import { Sender } from "../constants"
-import { resetChat } from '../services/geminiService';
 
 export interface Message {
 	key?: number;
@@ -43,7 +42,6 @@ const useChatStore = create<ChatStore>(
 				set((state) => ({ messages: [...state.messages, { ...message, key: Math.random() }] })),
 			// addHiddenMessage: (message) => set((state) => ({ hiddenMessages: message ? [message] : [] })),
 			clearMessages: () => {
-				resetChat(); // reset gemini chat
 				return set({ messages: [], hiddenMessages: [], lastKnownFigmaNode: null })
 			},
 			removeMessage: (message) =>

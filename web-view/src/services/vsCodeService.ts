@@ -1,6 +1,6 @@
 import { VsCommands } from "../constants";
 import useVsCodeMessageStore from "../store/vsCodeMessageStore";
-type VsCodeMessageCommand = 'copilotResponse';
+type VsCodeMessageCommand = 'copilotResponse' | 'cloudverseResponse';
 
 type VsCodeMessage = {
 	command: VsCodeMessageCommand;
@@ -80,4 +80,38 @@ export async function getConfiguration(key, skipOpeningSettings?): Promise<strin
 		throw new Error('API key not found. Configure it with vscode editor settings.');
 	}
 	return API_KEY;
+}
+
+export function sendCloudverseRequest(data: any, processingCallback: (data: string) => void): Promise<string> {
+	debugger;
+	console.log('sendCloudverseRequest', data);
+	return new Promise((resolve, reject) => {
+		const messageHandler = (event: MessageEvent) => {
+			const message = event.data;
+			if (message.command === 'cloudverseResponse') {
+				if (message.error) {
+					window.removeEventListener('message', messageHandler);
+					reject(new Error(message.error));
+					return;
+				}
+				
+				if (message.data) {
+					// Ensure line breaks are preserved
+					const formattedData = message.data.replace(/\\n/g, '\n');
+					processingCallback(formattedData);
+				}
+				
+				if (message.done) {
+					window.removeEventListener('message', messageHandler);
+					resolve(message.data);
+				}
+			}
+		};
+
+		window.addEventListener('message', messageHandler);
+		vsCode?.postMessage({
+			command: 'cloudverseRequest',
+			data
+		});
+	});
 }
