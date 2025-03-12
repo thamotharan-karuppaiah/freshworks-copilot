@@ -1,4 +1,3 @@
-
 import { XMLParser } from "fast-xml-parser";
 import { getConfiguration } from './services/vsCodeService';
 
@@ -16,134 +15,148 @@ export function LlmPrompt() {
 }
 
 export const LlmPrompJSON = `You are a Freshworks' Developer Chat Assistant for Code generation and Figma to Code conversion. 
-Possible User Inputs: 
-1  Usual user asks and you need to provide the response.
-2. Figma related questions: User can ask about Figma to code conversion. Some followup questions are you can respond with are:
-    Does: 
-    - ask for url if not provided. 
-    - ask the user to inspect the Figma design. when url found. (the selected not will set to assitant automatically)
-    - ask for the Figma node details if not provided in the hidden context.
-    - always clean the provided HTML to the best when you process. like removing unwanted tags and attributes or styles.
-    - ask user for the choice of styles if not proviced like external css / inline css / tailwind or any other.
-    Dont's: 
-    - Don't ask for the url if already provided, or hidden figma context already provided.
-    - Don't generate code if figma node details are not provided in the hidden context. intead ask to inpsect.
-3. Hidden context: Hidden contexts are something user is not providing, it is given by tools to LLM to add dynamic details.
-    1. HIDDEN:FIGMA NODE :<html>, This is pattern. When found, Use this to respond to user request appropriately. This will be set automatically by the tool when a node selected by user.
 
-Expected Assistant Response:   You must provide response in valid JSON string format, and should be parsable by JSON.stringify. The JSON should include the following fields:
-- "type": Specify the type of response. It can be either "text" or "code". use "code: when response has code snippets or any similar. [mandatory]
-- "message": If the type is "text", provide the text response here. If the type is "code", provide a brief message describing the generated code or file. [mandatory]
-- "inspectRequested":  set this to true, if the resposne is about asking for Figma inspections and the figma URL set. [mandatory when figma url is found]
-- "files": If the type is "code", include details of the generated files here. Each file should have the following fields: [mandatory when type is code]
-  - "fileType": Specify the file extension (e.g., js, jsx, css, etc.).
-  - "message": Provide a summary of the file's content or purpose. Like, Here is the file to print hello world in Python. 
-  - "fileName": Specify the name of the file. this can also have the relative path of the file.
-  - "content": Include the content of the file.
-- "followups": []  Followup suggestions for the response provided. Try suggest more relavent thing the user might next ask(User to Assitant). its is an array of string.[mandatory]
-  Eg1. {"type": "text", "message": "Hi, How i may assist you?"}
-  Eg2. { "type": "code" ,  "files": [{ "fileType": "py", "message": "Here is the code to print hello world in Python", fileName: "src/hello.py", content: "print(\"Hello, World!\")" }], "followups":["How to get started with python?"] }
-  Eg2. { "type": "code" ,  "files": [{ "fileType": "tsx", "message": "Here is the customer componenent", fileName: "app/components/Customer.tsx", content: "<content>", followups:["How to create unit tests?", "Help me to create another component?"]  }] }
+WHAT YOU CAN ASK:
+1. Code Generation & Development:
+   - Generate new code components, functions, or entire applications
+   - Debug existing code
+   - Add features or modify existing code
+   - Get best practices and code optimization suggestions
 
-  MOST IMPORTANT: 'The response should always be in JSON string format. Don't add any markdown as it is been handled outside.
-  `
+2. Figma to Code Conversion:
+   - Convert Figma designs to code (React, Angular, HTML/CSS, etc.)
+   - When asking about Figma:
+     * Provide the Figma URL if not already shared
+     * Select nodes in Figma for conversion (will be automatically provided to assistant)
+     * Choose styling preferences (external CSS, inline CSS, Tailwind, etc.)
+   - The assistant will:
+     * Ask for URL if not provided
+     * Guide you to inspect the design when URL is found
+     * Request node selection if not provided
+     * Clean and optimize the generated code
+     * Create appropriate file structure based on the framework
 
-export const LlmPromptXML = `You are a Freshworks' Developer Chat Assistant for Code generation and Figma to Code conversion. 
-  Possible User Inputs: 
-  1  Usual user asks and you need to provide the response.
-  2. Figma related questions: User can ask about Figma to code conversion. Some followup questions are you can respond with are:
-      Does: 
-      - ask for url if not provided. 
-      - ask the user to inspect the Figma design. when url found. (the selected not will set to assitant automatically)
-      - ask for the Figma node details if not provided in the hidden context.
-      - ask for what do do next when node details provided in the hidden context.
-      - always clean the provided HTML to the best when you process. like removing unwanted tags and attributes or styles.
-      - Always ask the user with what to do with the provided hidden context html or when a node is submited without any explicit ask. like convert to react/ember/angular or any other code conversion.
-      - always creates file paths and file names accroding to the framework or language user is working with.
-      Dont's: 
-      - Don't ask for the url if already provided, or hidden figma context already provided.
-      - Don't generate code if figma node details are not provided in the hidden context. intead ask to inpsect.
+3. Hidden Context Support:
+   When you select a Figma node, it's automatically provided to the assistant as:
+   HIDDEN:FIGMA NODE: <node-details>
+   This helps the assistant understand the design context without explicit sharing.
 
-  3. Hidden context: Hidden contexts are something user is not providing, it is given by tools to LLM to add dynamic details.
-      1. HIDDEN:FIGMA NODE:<html-markup>, This is pattern. When found, Use this context identify related infromation for the user's query. ( Hidden context are provided by tools, not by users.)
-  
-  Expected Assistant Response:   You must provide response in valid XML format. The XML should include the following fields:
-  - "type": Specify the type of response. It can be either "text" or "code". use "code: when response has code snippets or any similar. [mandatory]
-  - "message": If the type is "text", provide the text response here. If the type is "code", provide a brief message describing the generated code or file. [mandatory]
-  - "inspectRequested":  set this to true, if the resposne is about asking for Figma inspections and the figma URL set. [mandatory when figma url is found]
-  - "files": If the type is "code", include details of the generated files here. Each file should have the following fields: [mandatory when type is code]
-    - "fileType": Specify the file extension (e.g., js, jsx, css, etc.).
-    - "message": Provide a summary of the file's content or purpose. Like, Here is the file to print hello world in Python. 
-    - "fileName": Specify the name of the file. this can also have the relative path of the file.
-    - "content": Include the content of the file.
-  - "followups": []  Followup suggestions for the response provided. Try suggest more relavent thing the user might next ask. its is an array of string.[mandatory]
-  Eg1. 
-  <root type="text" inspectRequested="false">
-    <message>Hi, How i may assist you?</message>
-  </root>
-  Eg2.
-  <root type="code" inspectRequested="false">
-    <message>Here is the code to python project</message>
-    <files fileType="py" fileName="src/hello.py">
-      <message>Here is the code to print hello world in Python</message>
-      <content><![CDATA[print("Hello, World!")]]></content>
-    </files>
-    <files fileType="yml" fileName="config.yml">
-      <message>Here is the config file</message>
-      <content><![CDATA[<config>]]></content>
-    </files>
-    <followups> How to get started with python? </followups>
-    <followups>  Add config to change databse </followups>
-  </root>
-  
-  MOST IMPORTANT: 'The response should always be in XML format.The tags like 'files' and 'followups' may repeat more than once. Don't add any markdown as it is been handled outside. 
-    `;
+RESPONSE FORMAT:
+1. Responses will be in markdown format for clear reading
+2. Special actions are marked with specific tags:
 
+   For code files:
+   ---@file:start fileName="path/to/file" type="fileType"
+   \`\`\`language
+   code content here
+   \`\`\`
+   ---@file:end
 
-export const processMessage = (message: string) => {
-  const jsonText = promptResponseType === 'xml' ? message.match(/```xml(.*)```/s) : message.match(/```json(.*)```/s);
-  if (jsonText && jsonText[1]) {
-    return jsonText[1];
-  } else {
+   For Figma inspection:
+   ---@figma:inspect
+   
+   For follow-up suggestions:
+   ---@followups
+   - Suggestion 1
+   - Suggestion 2
+
+Example Response:
+Here's the Button component you requested.
+
+---@file:start fileName="components/Button.tsx" type="tsx"
+\`\`\`tsx
+export const Button = () => {
+  return <button>Click me</button>
+}
+\`\`\`
+---@file:end
+
+Let me know if you need any modifications.
+
+---@followups
+- How do I style this button?
+- Can you add click handling?
+- How do I make this button responsive?
+`;
+
+export const LlmPromptXML = LlmPrompJSON;
+
+export interface ParsedResponse {
+  type: 'text' | 'code';
+  message: string;
+  inspectRequested: boolean;
+  files?: {
+    fileType: string;
+    message?: string;
+    fileName: string;
+    content: string;
+  }[];
+  followups?: string[];
+}
+
+export function processMessage(message: string): string {
     return message;
-  }
 }
 
-export const parseMessage = (message: string) => {
-  try {
-    if (promptResponseType === 'xml') {
-      return convertXmlToJson(message);
-    }
-    else {
-      const parsedData = JSON.parse(message);
-      if (!parsedData.type) {
-        return { type: 'text', message: message, inspectRequested: false };
-      }
-      return parsedData;
-    }
-  }
-  catch (ex) {
-    return { type: 'text', message: message, inspectRequested: false };
-  }
-}
-
-function convertXmlToJson(xmlString) {
-  const parser = new XMLParser({
-    allowBooleanAttributes: true, attributeNamePrefix: '', ignoreAttributes: false, isArray: (tagName: string, jPath: string, isLeafNode: boolean, isAttribute: boolean) => {
-      return tagName === 'files' || tagName === 'followups';
-    }
-  });
-  let jObj = parser.parse(xmlString);
-  let xmlRoot = jObj.root;
-  if (!xmlRoot) {
-    throw new Error('Invalid XML format');
-  }
-  return {
-    ...xmlRoot,
-    inspectRequested: xmlRoot.inspectRequested === 'true',
-    message: typeof xmlRoot.message === 'string' ? xmlRoot.message : xmlRoot.message?.join('\n'),
-    followups: xmlRoot.followups?.length ? xmlRoot.followups : xmlRoot.followups?.followups?.length ? xmlRoot.followups.followups : []
+export function parseMessage(message: string): ParsedResponse {
+  const response: ParsedResponse = {
+    type: 'text',
+    message: '',
+    inspectRequested: false,
+    files: [],
+    followups: []
   };
+
+  // Split message into sections based on markers
+  const sections = message.split(/---@/);
+  
+  // First section is always the main message
+  let mainMessage = sections[0];
+
+  // Remove followups section from main message if it exists
+  const followupsMarkerIndex = mainMessage.toLowerCase().indexOf('\nfollowups:');
+  if (followupsMarkerIndex !== -1) {
+    mainMessage = mainMessage.substring(0, followupsMarkerIndex);
+  }
+
+  response.message = mainMessage.trim();
+
+  // Process remaining sections
+  for (let i = 1; i < sections.length; i++) {
+    const section = sections[i];
+    
+    if (section.startsWith('file:start')) {
+      // Extract file info and handle streaming code blocks
+      const fileNameMatch = section.match(/fileName="([^"]+)"/);
+      const typeMatch = section.match(/type="([^"]+)"/);
+      let content = '';
+      
+      // Find the code block content, even if it's incomplete
+      const codeBlockMatch = section.match(/```[\w-]*\n([\s\S]*?)($|```)/);
+      if (codeBlockMatch) {
+        content = codeBlockMatch[1];
+      }
+      
+      if (fileNameMatch && typeMatch) {
+        response.type = 'code';
+        response.files.push({
+          fileName: fileNameMatch[1],
+          fileType: typeMatch[1],
+          content: content.trim(),
+          message: 'Generated file'
+        });
+      }
+    } else if (section.startsWith('figma:inspect')) {
+      response.inspectRequested = true;
+    } else if (section.startsWith('followups')) {
+      const suggestions = section.split('\n')
+        .filter(line => line.trim().startsWith('-'))
+        .map(line => line.trim().substring(1).trim());
+      response.followups = suggestions;
+    }
+  }
+
+  return response;
 }
 
 export enum VsCommands {

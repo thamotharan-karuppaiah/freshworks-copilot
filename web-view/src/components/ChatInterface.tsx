@@ -11,6 +11,7 @@ import useVsCodeMessageStore from '../store/vsCodeMessageStore';
 import LoadingText from './LoadingText';
 import { getLlmResponse } from '../services/cloudverseService';
 import { LucideSend, LucideTrash2, LucideX, LucidePlus, LucideMessageSquare, LucideEdit2 } from 'lucide-react';
+import { v4 as uuidv4 } from 'uuid';
 
 const MODEL_GROUPS = {
   Anthropic: [
@@ -47,7 +48,8 @@ const ChatInterface: React.FC = () => {
     createNewChat,
     switchChat,
     updateChatTitle,
-    deleteChat
+    deleteChat,
+    updateMessage
   }: ChatStore = useChatStore();
   
   const vsCodeMessage = useVsCodeMessageStore((state) => state.message);
@@ -128,7 +130,6 @@ const ChatInterface: React.FC = () => {
         await processIfPromptIsFigmaURL(message);
       } else {
         if (lastKnownFigmaNode) {
-          // hiddenPrompt = `HIDDEN:FIGMA NODE : ${createComponent(lastKnownFigmaNode.selectedNode as any, lastKnownFigmaNode.fileImageFillsResponse?.meta?.images)}`;
           hiddenPrompt = `HIDDEN:FIGMA NODE : ${JSON.stringify(lastKnownFigmaNode.selectedNode)}`;
           let userHidePrompt = { sender: Sender.User, text: hiddenPrompt, hidden: true };
           addMessage(userHidePrompt);
@@ -136,19 +137,28 @@ const ChatInterface: React.FC = () => {
         }
       }
 
-      const botResponse = await getLlmResponse(history, message, model, (stream) => {
-        setStreamingText((prev) => prev + stream);
+      let accumulatedText = '';
+      const messageKey = uuidv4();
+      const botMessage = { sender: Sender.Bot, text: '', key: messageKey, isStreaming: true };
+      addMessage(botMessage);
+
+      await getLlmResponse(history, message, model, (stream) => {
+        accumulatedText += stream;
+        setStreamingText(accumulatedText);
+        updateMessage(messageKey, accumulatedText, true);
       });
 
+      // Update final message and set streaming to false
+      updateMessage(messageKey, accumulatedText, false);
+
+      // Parse the final response for followups
       try {
-        let followUpResponse = parseMessage(botResponse).followups || [];
+        let followUpResponse = parseMessage(accumulatedText).followups || [];
         setfollowupSuggestions(followUpResponse);
       } catch {
         setfollowupSuggestions([]);
       }
 
-      const botMessage = { sender: Sender.Bot, text: botResponse };
-      addMessage(botMessage);
     } catch (error) {
       const errorMessage = { sender: Sender.Bot, text: error.message ?? 'Error fetching response from the model.', presentationonly: true };
       addMessage(errorMessage);
@@ -184,7 +194,7 @@ const ChatInterface: React.FC = () => {
                 className="p-1 hover:bg-[var(--vscode-toolbar-hoverBackground)] rounded transition-colors"
                 title="Clear selected node"
               >
-                <LucideX className="w-3.5 h-3.5" />
+                <LucideX size={14} />
               </button>
             </div>
             <div className="flex items-start gap-2">
@@ -207,7 +217,7 @@ const ChatInterface: React.FC = () => {
                 className="px-3 py-2 bg-[#1268FB] text-white rounded text-sm hover:bg-[#0051D6] transition-colors flex items-center gap-1.5"
                 onClick={() => sendMessage()}
               >
-                <LucideSend className="w-3.5 h-3.5" />
+                <LucideSend size={14} />
                 <span>Send</span>
               </button>
             </div>
@@ -232,7 +242,7 @@ const ChatInterface: React.FC = () => {
               className="px-3 py-2 bg-[#1268FB] text-white rounded text-sm hover:bg-[#0051D6] transition-colors flex items-center gap-1.5 h-[48px]"
               onClick={() => sendMessage()}
             >
-              <LucideSend className="w-3.5 h-3.5" />
+              <LucideSend size={14} />
               <span>Send</span>
             </button>
           </div>
@@ -251,7 +261,7 @@ const ChatInterface: React.FC = () => {
           onClick={() => setIsChatListOpen(!isChatListOpen)}
           title="Chat history"
         >
-          <LucideMessageSquare className="w-4 h-4" />
+          <LucideMessageSquare size={16} />
         </button>
         <button
           className={`flex items-center justify-center w-8 h-8 hover:bg-[var(--vscode-toolbar-hoverBackground)] rounded transition-all ${
@@ -268,7 +278,7 @@ const ChatInterface: React.FC = () => {
           disabled={isCreatingChat}
           title="New chat"
         >
-          <LucidePlus className="w-4 h-4" />
+          <LucidePlus size={16} />
         </button>
       </div>
 
@@ -328,7 +338,7 @@ const ChatInterface: React.FC = () => {
                     }}
                     title="Rename chat"
                   >
-                    <LucideEdit2 className="w-3 h-3" />
+                    <LucideEdit2 size={12} />
                   </button>
                   <button
                     className="p-1 hover:bg-[var(--vscode-toolbar-hoverBackground)] rounded transition-colors"
@@ -338,7 +348,7 @@ const ChatInterface: React.FC = () => {
                     }}
                     title="Delete chat"
                   >
-                    <LucideTrash2 className="w-3 h-3" />
+                    <LucideTrash2 size={12} />
                   </button>
                 </div>
               </div>
@@ -369,7 +379,7 @@ const ChatInterface: React.FC = () => {
           onClick={() => { clearMessages(); setLastKnownFigmaNode(null); setfollowupSuggestions([]); }}
           title="Clear chat history"
         >
-          <LucideTrash2 className="w-3.5 h-3.5" />
+          <LucideTrash2 size={14} />
         </button>
       </div>
 
@@ -396,18 +406,18 @@ const ChatInterface: React.FC = () => {
               message.sender === Sender.User ? 'flex-row-reverse' : 'flex-row'
             }`}>
               {/* Avatar */}
-              <div className={`w-8 h-8 rounded-md flex items-center justify-center flex-shrink-0 ${  /* Increased avatar size */
+              <div className={`w-8 h-8 rounded-md flex items-center justify-center flex-shrink-0 ${
                 message.sender === Sender.User 
                   ? 'bg-[#1268FB] text-white' 
                   : 'bg-[var(--vscode-activityBarBadge-background)]'
               }`}>
                 {message.sender === Sender.User ? (
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="text-[var(--vscode-button-foreground)]"> {/* Increased icon size */}
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="text-[var(--vscode-button-foreground)]">
                     <path d="M8 8C10.2091 8 12 6.20914 12 4C12 1.79086 10.2091 0 8 0C5.79086 0 4 1.79086 4 4C4 6.20914 5.79086 8 8 8Z" fill="currentColor"/>
                     <path d="M8 9C5.33333 9 0 10.3333 0 13V14C0 15.1046 0.895431 16 2 16H14C15.1046 16 16 15.1046 16 14V13C16 10.3333 10.6667 9 8 9Z" fill="currentColor"/>
                   </svg>
                 ) : (
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="text-[var(--vscode-activityBarBadge-foreground)]"> {/* Increased icon size */}
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="text-[var(--vscode-activityBarBadge-foreground)]">
                     <path d="M8 1.5C11.5899 1.5 14.5 4.41015 14.5 8C14.5 11.5899 11.5899 14.5 8 14.5C4.41015 14.5 1.5 11.5899 1.5 8C1.5 4.41015 4.41015 1.5 8 1.5Z" stroke="currentColor" strokeWidth="1.5"/>
                     <path d="M5 8H11M5 5.5H11M5 10.5H9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
                   </svg>
@@ -415,7 +425,7 @@ const ChatInterface: React.FC = () => {
               </div>
 
               {/* Message content */}
-              <div className={`relative group rounded-lg px-4 py-3 ${
+              <div className={`relative group rounded-lg px-4 py-3 max-w-full ${
                 message.sender === Sender.User
                   ? 'bg-[#1268FB] text-white shadow-sm'
                   : 'bg-[var(--vscode-input-background)] text-[var(--vscode-input-foreground)] shadow-sm'
@@ -428,7 +438,7 @@ const ChatInterface: React.FC = () => {
                   }`}
                   onClick={() => handleDeleteMessage(message)}
                 >
-                  <LucideX className="w-3.5 h-3.5" />
+                  <LucideX size={14} />
                 </button>
                 {message.isImage ? (
                   <FigmaNodeViewer
@@ -437,32 +447,23 @@ const ChatInterface: React.FC = () => {
                     image={message.imgPath}
                   />
                 ) : (
-                  <LlmResponse data={message.text} />
+                  <>
+                    <LlmResponse 
+                      data={message.text} 
+                      messageKey={message.key}
+                      isStreaming={message.isStreaming}
+                    />
+                    {message.isStreaming && (
+                      <div className="mt-2">
+                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-[var(--vscode-textLink-foreground)] border-t-transparent" />
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
             </div>
           </div>
         ))}
-        {loading && (
-          <div className="mx-auto mt-4"> {/* Added max-width container */}
-            <div className="flex items-start gap-3">
-              <div className="w-8 h-8 rounded-md bg-[var(--vscode-activityBarBadge-background)] flex items-center justify-center flex-shrink-0"> {/* Increased loading avatar size */}
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="text-[var(--vscode-activityBarBadge-foreground)]"> {/* Increased icon size */}
-                  <path d="M8 1.5C11.5899 1.5 14.5 4.41015 14.5 8C14.5 11.5899 11.5899 14.5 8 14.5C4.41015 14.5 1.5 11.5899 1.5 8C1.5 4.41015 4.41015 1.5 8 1.5Z" stroke="currentColor" strokeWidth="1.5"/>
-                  <path d="M5 8H11M5 5.5H11M5 10.5H9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                </svg>
-              </div>
-              <div className="flex-1 max-w-[85%] bg-[var(--vscode-input-background)] text-[var(--vscode-input-foreground)] rounded-lg px-4 py-3 shadow-sm">
-                <LoadingText startTime={1} />
-                {streamingText && (
-                  <div className="mt-2 text-xs text-[var(--vscode-descriptionForeground)]"> {/* Increased margin */}
-                    {streamingText.length} characters generated
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
       </div>
 
       {/* Follow-up suggestions */}

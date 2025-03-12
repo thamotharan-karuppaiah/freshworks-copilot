@@ -13,13 +13,14 @@ export interface Message {
 	animation?: string;
 	presentationonly?: boolean;
 	hidden?: boolean;
-	isImage?: boolean,
-	imgPath?: string,
+	isImage?: boolean;
+	isStreaming?: boolean;
+	imgPath?: string;
 	figmaResponse?: {
-		nodeResponse: FileNodesResponse,
-		fileInfo: FigmaFileInfo,
-		nodeImages: FileImageResponse,
-		fileImageFillsResponse: FileImageFillsResponse
+		nodeResponse: FileNodesResponse;
+		fileInfo: FigmaFileInfo;
+		nodeImages: FileImageResponse;
+		fileImageFillsResponse: FileImageFillsResponse;
 	}
 }
 
@@ -42,6 +43,7 @@ export interface ChatStore {
 	createNewChat: () => void;
 	switchChat: (chatId: string) => void;
 	updateChatTitle: (chatId: string, title: string) => void;
+	updateMessage: (messageKey: string, text: string, isStreaming?: boolean) => void;
 	deleteChat: (chatId: string) => void;
 }
 
@@ -72,7 +74,7 @@ const useChatStore = create<ChatStore>(
 							...state,
 							chats: [{
 								...newChat,
-								messages: [{ ...message, key: uuidv4() }],
+								messages: [{ ...message }],
 								lastUpdatedAt: Date.now()
 							}, ...state.chats],
 							currentChatId: newChat.id
@@ -90,7 +92,7 @@ const useChatStore = create<ChatStore>(
 							? {
 									...chat,
 									title: updatedTitle,
-									messages: [...chat.messages, { ...message, key: uuidv4() }],
+									messages: [...chat.messages, { ...message }],
 									lastUpdatedAt: Date.now()
 								}
 							: chat
@@ -164,6 +166,28 @@ const useChatStore = create<ChatStore>(
 							: chat
 					)
 				})),
+
+			updateMessage: (messageKey: string, text: string, isStreaming?: boolean) =>
+				set((state) => {
+					const currentChat = state.chats.find(chat => chat.id === (state.currentChatId || state.chats[0].id));
+					if (!currentChat) return state;
+
+					const updatedChats = state.chats.map(chat => 
+						chat.id === currentChat.id 
+							? {
+									...chat,
+									messages: chat.messages.map(msg => 
+										msg.key === messageKey 
+											? { ...msg, text, isStreaming: isStreaming ?? msg.isStreaming }
+											: msg
+									),
+									lastUpdatedAt: Date.now()
+								}
+							: chat
+					);
+
+					return { ...state, chats: updatedChats };
+				}),
 
 			deleteChat: (chatId: string) =>
 				set((state) => {
