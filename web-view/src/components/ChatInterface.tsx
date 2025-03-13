@@ -57,6 +57,7 @@ const ChatInterface: React.FC = () => {
   const inputTextRef = useRef<HTMLTextAreaElement>();
   const [loading, setLoading] = useState(false);
   const [streamingText, setStreamingText] = useState('');
+  const [streamingCharCount, setStreamingCharCount] = useState(0);
   const [model, setModel] = useState('anthropic-claude-3-7-sonnet');
   const [followupSuggestions, setfollowupSuggestions] = useState<string[]>([]);
   const [isChatListOpen, setIsChatListOpen] = useState(false);
@@ -156,6 +157,7 @@ const ChatInterface: React.FC = () => {
     if (currentMessageKey) {
       updateMessage(currentMessageKey, streamingText, false);
     }
+    setStreamingCharCount(0);
   };
 
   const sendMessage = async (messageText?: string) => {
@@ -166,6 +168,7 @@ const ChatInterface: React.FC = () => {
     inputTextRef.current.value = '';
     setLoading(true);
     setStreamingText('');
+    setStreamingCharCount(0);
     try {
       let history = getHistory();
       let userPrompt = { sender: Sender.User, text: message };
@@ -192,12 +195,14 @@ const ChatInterface: React.FC = () => {
       await getLlmResponse(history, message, model, (stream) => {
         accumulatedText += stream;
         setStreamingText(accumulatedText);
+        setStreamingCharCount(accumulatedText.length);
         updateMessage(messageKey, accumulatedText, true);
       });
 
       // Update final message and set streaming to false
       updateMessage(messageKey, accumulatedText, false);
       setCurrentMessageKey(null);
+      setStreamingCharCount(0);
 
       // Parse the final response for followups
       try {
@@ -214,6 +219,7 @@ const ChatInterface: React.FC = () => {
       setLoading(false);
       setStreamingText('');
       setCurrentMessageKey(null);
+      setStreamingCharCount(0);
     }
   };
 
@@ -238,6 +244,11 @@ const ChatInterface: React.FC = () => {
       clearAllStorage();
       window.location.reload(); // Reload to refresh the UI state
     }
+  };
+
+  const formatCharCount = (count: number) => {
+    if (count < 1000) return `${count} chars`;
+    return `${(count / 1000).toFixed(1)}K chars`;
   };
 
   const InputArea = () => (
@@ -326,7 +337,7 @@ const ChatInterface: React.FC = () => {
               {loading ? (
                 <>
                   <LucideSquare size={16} />
-                  Stop
+                  Stop {streamingCharCount > 0 && `(${formatCharCount(streamingCharCount)})`}
                 </>
               ) : (
                 <>
@@ -604,6 +615,11 @@ const ChatInterface: React.FC = () => {
                       messageKey={message.key}
                       isStreaming={message.isStreaming}
                     />
+                    {message.isStreaming && message.text && message.text.length > 0 && (
+                      <div className="mt-2 text-xs text-tertiary">
+                        {formatCharCount(message.text.length)} processed
+                      </div>
+                    )}
                   </div>
                 )}
               </div>

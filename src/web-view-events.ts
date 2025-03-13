@@ -3,6 +3,21 @@ import { openConfiguration, sendCopyCliboardRequest, sendCreateFileRequest } fro
 import * as https from 'https';
 
 let chatWebView: vscode.Webview;
+// Buffer for collecting streaming data
+let streamBuffer = '';
+let lastSendTime = 0;
+// Minimum time between updates (ms)
+const MIN_UPDATE_INTERVAL = 300;
+// Maximum buffer size before forcing an update
+const MAX_BUFFER_SIZE = 10000;
+// Track total characters processed
+let totalCharsProcessed = 0;
+
+// Format character count for display
+function formatCharCount(count: number): string {
+	if (count < 1000) return `${count} chars`;
+	return `${(count / 1000).toFixed(1)}K chars`;
+}
 
 async function ensureWorkspaceFolder(): Promise<vscode.WorkspaceFolder | undefined> {
 	if (!vscode.workspace.workspaceFolders || vscode.workspace.workspaceFolders.length === 0) {
@@ -86,23 +101,71 @@ async function openAllFiles(files: { fileName: string }[]) {
 	}
 }
 
+// Function to send buffered data to webview with throttling
+function sendBufferedDataToWebview() {
+	if (!streamBuffer || !chatWebView) return;
+	
+	const now = Date.now();
+	if (now - lastSendTime < MIN_UPDATE_INTERVAL && streamBuffer.length < MAX_BUFFER_SIZE) {
+		// Schedule sending later if not enough time has passed and buffer isn't too large
+		return;
+	}
+	
+	// Send the buffered data
+	chatWebView.postMessage({
+		command: 'cloudverseResponse',
+		data: streamBuffer
+	});
+	
+	// Reset buffer and update timestamp
+	streamBuffer = '';
+	lastSendTime = now;
+}
+
 async function makeHttpRequest(url: string, options: any, data: any): Promise<string> {
+	// Reset buffer and character count at the start of a new request
+	streamBuffer = '';
+	lastSendTime = 0;
+	totalCharsProcessed = 0;
+	
+	// Show initial status message
+	vscode.window.setStatusBarMessage(`Generating response...`);
+	
 	return new Promise((resolve, reject) => {
 		const req = https.request(url, options, (res) => {
 			let responseData = '';
 			
 			res.on('data', (chunk) => {
 				responseData += chunk;
-				// Send chunk to webview
+				const chunkStr = chunk.toString();
+				totalCharsProcessed += chunkStr.length;
+				
+				// Update status bar with character count
+				vscode.window.setStatusBarMessage(`Generating response... (${formatCharCount(totalCharsProcessed)})`);
+				
+				// Add to buffer instead of sending immediately
 				if (chatWebView) {
-					chatWebView.postMessage({
-						command: 'cloudverseResponse',
-						data: chunk.toString()
-					});
+					streamBuffer += chunkStr;
+					sendBufferedDataToWebview();
+					
+					// Set up a timer to ensure data gets sent even if chunks stop coming
+					setTimeout(sendBufferedDataToWebview, MIN_UPDATE_INTERVAL);
 				}
 			});
 
 			res.on('end', () => {
+				// Send any remaining buffered data
+				if (streamBuffer && chatWebView) {
+					chatWebView.postMessage({
+						command: 'cloudverseResponse',
+						data: streamBuffer
+					});
+					streamBuffer = '';
+				}
+				
+				// Clear status bar message
+				vscode.window.setStatusBarMessage(`Response complete (${formatCharCount(totalCharsProcessed)})`, 3000);
+				
 				if (res.statusCode && (res.statusCode < 200 || res.statusCode >= 300)) {
 					reject(new Error(`HTTP error! status: ${res.statusCode}, body: ${responseData}`));
 				} else {
@@ -112,6 +175,7 @@ async function makeHttpRequest(url: string, options: any, data: any): Promise<st
 		});
 
 		req.on('error', (error) => {
+			vscode.window.setStatusBarMessage('');
 			reject(error);
 		});
 
