@@ -23,14 +23,6 @@ export const useStreamingContent = (responseMessage: string, isStreaming: boolea
   const processingTimerRef = useRef<number | null>(null);
   const fileContentsRef = useRef<{[key: string]: string}>({});
   const lastProcessTimeRef = useRef<number>(0);
-  const lastResponseMessageRef = useRef<string>('');
-  
-  // Store the last response message to handle transition from streaming to completed
-  useEffect(() => {
-    if (isStreaming && responseMessage) {
-      lastResponseMessageRef.current = responseMessage;
-    }
-  }, [isStreaming, responseMessage]);
   
   // Cleanup function for code fence markers - memoized to avoid recreation
   const cleanupCodeFenceMarkers = useCallback((content: string): string => {
@@ -276,7 +268,7 @@ export const useStreamingContent = (responseMessage: string, isStreaming: boolea
       // Extract content even for incomplete blocks so we can show the last 10 lines if requested
       let fileContent = extractFileContent(fileBlockContent, fileStart.fileName, fileStart.complete);
       
-      // Store the content in our ref for future use if it's not a placeholder
+      // Store the content in our ref for future use
       if (fileContent && fileContent.length > 0 && !fileContent.includes("being generated")) {
         fileContentsRef.current[fileStart.fileName] = fileContent;
       } else if (fileContentsRef.current[fileStart.fileName]) {
@@ -330,26 +322,17 @@ export const useStreamingContent = (responseMessage: string, isStreaming: boolea
     };
   }, [isStreaming, responseMessage]);
 
-  // Reset cache when streaming stops, but preserve file contents
+  // Reset cache when streaming stops
   useEffect(() => {
     if (!isStreaming) {
-      // Don't clear fileContentsRef to preserve file content across streaming state changes
       cachedSegmentsRef.current = null;
       prevMessageLengthRef.current = 0;
+      fileContentsRef.current = {};
       lastProcessTimeRef.current = 0;
       
       if (processingTimerRef.current !== null) {
         window.clearTimeout(processingTimerRef.current);
         processingTimerRef.current = null;
-      }
-      
-      // Log preserved file contents for debugging
-      const fileCount = Object.keys(fileContentsRef.current).length;
-      if (fileCount > 0) {
-        console.log(`Preserved ${fileCount} file contents during streaming transition`);
-        Object.entries(fileContentsRef.current).forEach(([fileName, content]) => {
-          console.log(`- ${fileName}: ${content.length} characters`);
-        });
       }
     }
   }, [isStreaming]);

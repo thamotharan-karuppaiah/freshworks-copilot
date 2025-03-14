@@ -135,6 +135,12 @@ export function parseMessage(message: string): ParsedResponse {
     followups: []
   };
 
+  if (!message || typeof message !== 'string') {
+    console.log('Invalid message received:', message);
+    response.message = message || '';
+    return response;
+  }
+
   // Check and extract figma:inspect markers
   if (message.includes('---@figma:inspect')) {
     console.log('Figma inspect marker found in message');
@@ -158,27 +164,152 @@ export function parseMessage(message: string): ParsedResponse {
     }
   }
   
-  // Extract file blocks - modified to not rely on markdown backticks
-  const fileBlocks = message.match(/---@file:start[\s\S]*?---@file:end/g) || [];
-  if (fileBlocks.length > 0) {
-    response.type = 'code';
-    
-    for (const block of fileBlocks) {
-      const fileNameMatch = block.match(/fileName="([^"]+)"/);
-      const typeMatch = block.match(/type="([^"]+)"/);
+  // Quick check if we have any file blocks at all
+  const hasFileStart = message.includes('---@file:start');
+  const hasFileEnd = message.includes('---@file:end');
+  
+  // Determine if we're likely in a streaming state
+  const isLikelyStreaming = hasFileStart && !hasFileEnd;
+  
+  // If we have start markers but no end markers, we're likely still streaming
+  // In this case, we'll skip file extraction to avoid parsing incomplete blocks
+  if (isLikelyStreaming) {
+    console.log('Found file:start markers but no file:end markers - likely still streaming');
+    response.message = message;
+    return response;
+  }
+  
+  // Find all file blocks by iterating through the message
+  let startIndex = 0;
+  let hasFileBlocks = false;
+  let fileBlockCount = 0;
+  let incompleteBlockCount = 0;
+  
+  try {
+    while (true) {
+      // Find the next file:start marker
+      const fileStartIndex = message.indexOf('---@file:start', startIndex);
+      if (fileStartIndex === -1) break; // No more file blocks
+      
+      // Set the response type to code if we found at least one file block
+      if (!hasFileBlocks) {
+        response.type = 'code';
+        hasFileBlocks = true;
+      }
+      
+      // Find the end marker for this file block
+      const fileEndIndex = message.indexOf('---@file:end', fileStartIndex);
+      if (fileEndIndex === -1) {
+        incompleteBlockCount++;
+        console.log(`Skipping incomplete file block #${incompleteBlockCount} at position ${fileStartIndex}`);
+        startIndex = fileStartIndex + 1; // Move past this incomplete block
+        continue;
+      }
+      
+      // Extract the complete block
+      const completeBlock = message.substring(fileStartIndex, fileEndIndex + '---@file:end'.length);
+      
+      // Extract file name and type
+      const fileNameMatch = completeBlock.match(/fileName="([^"]+)"/);
+      const typeMatch = completeBlock.match(/type="([^"]+)"/);
       
       if (fileNameMatch && typeMatch) {
-        // Extract the content directly between the file name line and the end marker
-        const contentMatch = block.match(/fileName="[^"]+"\s*\n([\s\S]*?)---@file:end/);
-        const fileContent = contentMatch ? contentMatch[1].trim() : "";
+        const fileName = fileNameMatch[1];
+        const fileType = typeMatch[1];
         
-        response.files.push({
-          fileName: fileNameMatch[1],
-          fileType: typeMatch[1],
-          content: fileContent
-        });
+        // Try to extract content using multiple methods
+        let fileContent = "";
+        let extractionMethod = "";
+        
+        // Method 1: Find content between fileName line and end marker
+        try {
+          // Find the position after the fileName attribute
+          const fileNamePos = completeBlock.indexOf(`fileName="${fileName}"`);
+          if (fileNamePos !== -1) {
+            // Find the first newline after fileName declaration
+            const firstNewlinePos = completeBlock.indexOf('\n', fileNamePos);
+            if (firstNewlinePos !== -1) {
+              // Extract content from after the newline to before the end marker
+              const contentStartPos = firstNewlinePos + 1;
+              const contentEndPos = completeBlock.lastIndexOf('---@file:end');
+              
+              if (contentStartPos < contentEndPos) {
+                fileContent = completeBlock.substring(contentStartPos, contentEndPos).trim();
+                extractionMethod = "primary";
+              }
+            }
+          }
+        } catch (e) {
+          console.log(`Primary extraction method failed for ${fileName}: ${e.message}`);
+        }
+        
+        // Method 2: Use regex if method 1 failed
+        if (!fileContent) {
+          try {
+            const contentMatch = completeBlock.match(/fileName="[^"]+"\s*\n([\s\S]*?)---@file:end/);
+            if (contentMatch && contentMatch[1]) {
+              fileContent = contentMatch[1].trim();
+              extractionMethod = "regex";
+            }
+          } catch (e) {
+            console.log(`Regex extraction method failed for ${fileName}: ${e.message}`);
+          }
+        }
+        
+        // Method 3: Split by lines if methods 1 and 2 failed
+        if (!fileContent) {
+          try {
+            const lines = completeBlock.split('\n');
+            // Find the line with fileName
+            const fileNameLineIndex = lines.findIndex(line => line.includes(`fileName="${fileName}"`));
+            if (fileNameLineIndex !== -1 && fileNameLineIndex < lines.length - 1) {
+              // Take all lines after the fileName line up to the line with end marker
+              const endMarkerLineIndex = lines.findIndex(line => line.includes('---@file:end'));
+              if (endMarkerLineIndex > fileNameLineIndex) {
+                fileContent = lines.slice(fileNameLineIndex + 1, endMarkerLineIndex).join('\n').trim();
+                extractionMethod = "line-by-line";
+              }
+            }
+          } catch (e) {
+            console.log(`Line-by-line extraction method failed for ${fileName}: ${e.message}`);
+          }
+        }
+        
+        // If we have content, add the file to the response
+        if (fileContent) {
+          fileBlockCount++;
+          
+          response.files.push({
+            fileName,
+            fileType,
+            content: fileContent
+          });
+          
+          console.log(`Extracted file ${fileBlockCount}: ${fileName} (${fileContent.length} chars) using ${extractionMethod} method`);
+        } else {
+          console.log(`Failed to extract content for ${fileName} using all methods`);
+        }
+      } else {
+        console.log('Missing fileName or type in file block');
+      }
+      
+      // Move past this block for the next iteration
+      startIndex = fileEndIndex + '---@file:end'.length;
+    }
+    
+    if (fileBlockCount > 0) {
+      console.log(`Successfully extracted ${fileBlockCount} file blocks`);
+      if (incompleteBlockCount > 0) {
+        console.log(`Skipped ${incompleteBlockCount} incomplete file blocks`);
+      }
+    } else if (hasFileStart) {
+      console.log('Found file:start markers but could not extract any complete file blocks');
+      if (incompleteBlockCount > 0) {
+        console.log(`Found ${incompleteBlockCount} incomplete file blocks - likely still streaming`);
       }
     }
+  } catch (error) {
+    console.error('Error parsing file blocks:', error);
   }
   
   // Set the message without removing anything
